@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Particle Accelerator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <h1 class="title">Particle Laboratory by Karl Lilje</h1>
+            <div class="stats">
+                <span class="stat-item">
+                    <span class="stat-label">Particles:</span>
+                    <span class="stat-value" id="particleCount">0</span>
+                </span>
+                <span class="stat-item">
+                    <span class="stat-label">FPS:</span>
+                    <span class="stat-value" id="fps">0</span>
+                </span>
+            </div>
+        </header>
+
+        <div class="content">
+            <canvas id="canvas"></canvas>
+            
+            <div class="control-panel">
+                <div class="control-section">
+                    <h3 class="section-title">Preset Layouts</h3>
+                    <!-- Preset buttons will be dynamically inserted here -->
+                </div>
+
+                <div class="control-section" id="descriptionSection" style="display: none;">
+                    <h3 class="section-title">Description</h3>
+                    <p class="preset-description" id="presetDescription"></p>
+                </div>
+
+                <div class="control-section">
+                    <h3 class="section-title">Simulation Controls</h3>
+                    
+                    <div class="control-group">
+                        <label class="control-label">
+                            Particle Count
+                            <span class="control-value" id="particleCountValue">10000</span>
+                        </label>
+                        <input type="range" id="particleCountSlider" 
+                               min="10" max="2000000" step="10" value="10000"
+                               class="slider">
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">
+                            Particle Size
+                            <span class="control-value" id="particleSizeValue">2</span>
+                        </label>
+                        <input type="range" id="particleSizeSlider" 
+                               min="1" max="5" step="0.5" value="2"
+                               class="slider">
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">
+                            Speed
+                            <span class="control-value" id="speedValue">1.0</span>
+                        </label>
+                        <input type="range" id="speedSlider" 
+                               min="0.1" max="3" step="0.1" value="1.0"
+                               class="slider">
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">
+                            Collision Damping
+                            <span class="control-value" id="dampingValue">0.8</span>
+                        </label>
+                        <input type="range" id="dampingSlider" 
+                               min="0.1" max="1" step="0.05" value="0.8"
+                               class="slider">
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3 class="section-title">Actions</h3>
+                    <button class="btn btn-primary" id="resetBtn">Reset Simulation</button>
+                    <button class="btn btn-secondary" id="pauseBtn">Pause</button>
+                    <button class="btn btn-secondary" id="clearShapesBtn">Clear Shapes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>

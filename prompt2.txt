@@ -1,0 +1,23 @@
+Add the ability to load preset layouts from json files:
+
+1. a blank field with 100000 particles
+2. a recreation of the double slit experiment- made from three solid blocks with a small gap inbetween for the particles to flow. 
+This will require adding the ability to add solid collision shapes.
+
+e.g. [
+        {
+        name : "Small Field",
+        particles: 1000
+    },
+    {
+    name : "Blank Field",
+    particles: 100000
+},
+name: "Double Slit Experiment",
+    particles: 100000,
+    box: {coordinates: 10, 10, 50, 20},
+    box: {coordinates: 60, 10, 150, 20},
+    box: {coordinates: 160, 10, 250, 20}
+
+]
+
