@@ -1,0 +1,73 @@
+# ParticlePlayground - Application Summary
+## Based on the research by Karl R Lilje
+
+## Overview
+ParticlePlayground is an interactive physics simulation application built with Python and Pygame. It provides a real-time particle physics sandbox with various forces, constraints, and interactive features.
+
+## Core Features
+
+### Particle System
+- Dynamic particle creation and management
+- Each particle has position, velocity, mass, radius, and color properties
+- Supports multiple particle types with different behaviors
+- Collision detection and elastic collision physics
+- Particle lifecycle management (creation, update, removal)
+
+### Physics Simulations
+- **Gravity**: Configurable global gravity affecting all particles
+- **Friction/Damping**: Air resistance to slow down particles over time
+- **Elastic Collisions**: Realistic particle-to-particle collision responses
+- **Wall Bouncing**: Particles bounce off screen boundaries with energy conservation
+
+### Interactive Forces
+- **Attraction Force**: Attracts particles toward mouse cursor
+- **Repulsion Force**: Pushes particles away from mouse cursor
+- **Tornado Force**: Creates a swirling vortex effect around the cursor
+- Forces can be toggled on/off and adjusted in strength
+
+### Constraints & Connections
+- **Springs**: Elastic connections between particles with configurable stiffness and damping
+- **Rigid Rods**: Fixed-length connections that maintain constant distance
+- **Chains**: Series of connected particles forming flexible structures
+- Constraint visualization with color-coded rendering
+
+### Visualization Options
+- **Velocity Vectors**: Visual representation of particle motion direction and speed
+- **Trails**: Motion trails showing particle paths over time
+- **Grid Overlay**: Reference grid for spatial awareness
+- **Force Field Visualization**: Shows active force fields and their intensity
+
+### User Controls
+- Mouse-based particle creation and interaction
+- Keyboard shortcuts for toggling features:
+  - Forces (attraction, repulsion, tornado)
+  - Visualization options (vectors, trails, grid)
+  - Physics parameters (gravity, friction)
+  - Constraint creation modes
+- Real-time parameter adjustment via UI sliders/controls
+
+### Performance Features
+- Optimized collision detection using spatial partitioning
+- Configurable maximum particle count
+- Frame rate limiting and smooth rendering
+- Efficient update loops for large particle systems
+
+## Technical Stack
+- **Python 3.x**: Core programming language
+- **Pygame**: Graphics rendering and event handling
+- **NumPy** (if used): Mathematical operations and vector calculations
+
+## Use Cases
+- Physics education and demonstration
+- Particle behavior experimentation
+- Interactive art and visualization
+- Algorithm testing for physics simulations
+- Prototyping game physics systems
+
+## File Structure
+- Main application code managing game loop and event handling
+- Particle class definitions with physics properties
+- Constraint/connection system implementations
+- Force calculation modules
+- Rendering and visualization components
+- Configuration and constants

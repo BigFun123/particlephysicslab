@@ -2,6 +2,7 @@ export class UIController {
     constructor(app) {
         this.app = app;
         this.activePresetButton = null;
+        this.currentPresetIndex = 0; // Track current preset
         this.setupEventListeners();
         // Build preset buttons last, after everything else is ready
         setTimeout(() => this.buildPresetButtons(), 0);
@@ -46,6 +47,10 @@ export class UIController {
             button.textContent = preset.name;
             button.dataset.presetIndex = index;
             button.addEventListener('click', () => {
+                // Store current preset
+                this.currentPreset = preset;
+                this.currentPresetIndex = index;
+                
                 console.log('Loading preset:', preset.name);
                 this.app.loadPreset(index);
                 this.showPresetDescription(preset, button);
@@ -68,15 +73,18 @@ export class UIController {
         button.classList.add('active');
         this.activePresetButton = button;
 
-        // Show description
-        const descriptionSection = document.getElementById('descriptionSection');
-        const descriptionText = document.getElementById('presetDescription');
+        // Store current preset index
+        this.currentPresetIndex = parseInt(button.dataset.presetIndex);
+
+        // Show description in header
+        const headerDescription = document.getElementById('headerDescription');
         
         if (preset.description) {
-            descriptionText.textContent = preset.description;
-            descriptionSection.style.display = 'block';
+            headerDescription.textContent = preset.description;
+            headerDescription.classList.add('visible');
         } else {
-            descriptionSection.style.display = 'none';
+            headerDescription.textContent = '';
+            headerDescription.classList.remove('visible');
         }
     }
 
@@ -92,7 +100,8 @@ export class UIController {
 
         particleCountSlider.addEventListener('change', (e) => {
             const count = parseInt(e.target.value);
-            this.app.reset(count);
+            // Instead of reset, reload the preset with new particle count
+            this.reloadPresetWithParticleCount(count);
         });
 
         // Particle size slider
@@ -127,8 +136,8 @@ export class UIController {
 
         // Reset button
         document.getElementById('resetBtn').addEventListener('click', () => {
-            const count = parseInt(particleCountSlider.value);
-            this.app.reset(count);
+            const particleCount = parseInt(document.getElementById('particleCountSlider').value);
+            this.app.reset(particleCount);
         });
 
         // Pause button
@@ -142,5 +151,43 @@ export class UIController {
         document.getElementById('clearShapesBtn').addEventListener('click', () => {
             this.app.clearShapes();
         });
+    }
+
+    reloadPresetWithParticleCount(newParticleCount) {
+        // Get the current preset
+        const preset = this.app.presetLoader.getPresetByIndex(this.currentPresetIndex);
+        if (!preset) return;
+
+        // Create a modified preset with new particle count
+        const modifiedPreset = { ...preset, particles: newParticleCount };
+        
+        // Reload with modified preset
+        const rect = this.app.canvas.getBoundingClientRect();
+        this.app.simulation = new (this.app.simulation.constructor)(modifiedPreset.particles);
+        this.app.simulation.bounds.width = rect.width;
+        this.app.simulation.bounds.height = rect.height;
+        this.app.simulation.shapes = modifiedPreset.shapes || [];
+        this.app.simulation.sensor = modifiedPreset.sensor || null;
+        this.app.simulation.init(modifiedPreset.initType || 'center');
+        
+        // Restore other settings from preset
+        if (modifiedPreset.glowIntensity !== undefined) {
+            this.app.renderer.glowIntensity = modifiedPreset.glowIntensity;
+        }
+        if (modifiedPreset.particleSize !== undefined) {
+            this.app.renderer.particleSize = modifiedPreset.particleSize;
+        }
+        if (modifiedPreset.speed !== undefined) {
+            this.app.simulation.speedMultiplier = modifiedPreset.speed;
+        }
+        if (modifiedPreset.damping !== undefined) {
+            this.app.simulation.damping = modifiedPreset.damping;
+        }
+        
+        document.getElementById('particleCount').textContent = newParticleCount.toLocaleString();
+    }
+
+    updateParticleCount(count) {
+        document.getElementById('particleCount').textContent = count.toLocaleString();
     }
 }

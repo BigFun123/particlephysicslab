@@ -3,6 +3,9 @@ import { ParticleSimulation } from './simulation.js';
 import { UIController } from './ui.js';
 import { PresetLoader } from './presetLoader.js';
 
+// Make ParticleSimulation available to UI controller
+window.ParticleSimulation = ParticleSimulation;
+
 class ParticleAccelerator {
     constructor() {
         this.canvas = document.getElementById('canvas');
@@ -67,10 +70,12 @@ class ParticleAccelerator {
                 const firstButton = document.querySelector('.btn-preset');
                 if (firstButton) {
                     firstButton.classList.add('active');
+                    this.ui.currentPresetIndex = 0;
                     const firstPresetData = this.presetLoader.getPresetByIndex(0);
                     if (firstPresetData && firstPresetData.description) {
-                        document.getElementById('presetDescription').textContent = firstPresetData.description;
-                        document.getElementById('descriptionSection').style.display = 'block';
+                        const headerDescription = document.getElementById('headerDescription');
+                        headerDescription.textContent = firstPresetData.description;
+                        headerDescription.classList.add('visible');
                     }
                 }
             }, 100);
@@ -137,10 +142,15 @@ class ParticleAccelerator {
     }
 
     reset(particleCount) {
-        this.simulation = new ParticleSimulation(particleCount);
+        this.simulation.resetShapes(); // Reset shapes to initial positions first
+        this.simulation.particleCount = particleCount;
         this.simulation.bounds.width = this.canvas.getBoundingClientRect().width;
         this.simulation.bounds.height = this.canvas.getBoundingClientRect().height;
-        this.simulation.init();
+        
+        // Use current preset's initType if available, otherwise default to 'center'
+        const initType = this.ui?.currentPreset?.initType || 'center';
+        this.simulation.init(initType);
+        
         document.getElementById('particleCount').textContent = particleCount.toLocaleString();
     }
 
@@ -162,7 +172,16 @@ class ParticleAccelerator {
         this.simulation = new ParticleSimulation(preset.particles);
         this.simulation.bounds.width = rect.width;
         this.simulation.bounds.height = rect.height;
-        this.simulation.shapes = preset.shapes || [];
+        
+        // Use addShape instead of direct assignment to track initial states
+        this.simulation.shapes = [];
+        this.simulation.initialShapeStates = [];
+        if (preset.shapes) {
+            preset.shapes.forEach(shape => {
+                this.simulation.addShape({...shape}); // Clone to avoid reference issues
+            });
+        }
+        
         this.simulation.sensor = preset.sensor || null;
         this.simulation.init(preset.initType || 'center');
         
@@ -215,7 +234,7 @@ class ParticleAccelerator {
     }
 
     clearShapes() {
-        this.simulation.shapes = [];
+        this.simulation.clearShapes();
     }
 
     togglePause() {
@@ -236,4 +255,103 @@ class ParticleAccelerator {
     }
 }
 
+function isPointInShape(x, y, shape) {
+    const dx = x - shape.x;
+    const dy = y - shape.y;
+    
+    if (shape.type === 'circle') {
+        return Math.sqrt(dx * dx + dy * dy) <= shape.radius;
+    } else if (shape.type === 'rect') {
+        return Math.abs(dx) <= shape.width / 2 && 
+               Math.abs(dy) <= shape.height / 2;
+    }
+    return false;
+}
+
+function isPositionOccupied(x, y) {
+    for (const shape of simulation.shapes) {
+        if (isPointInShape(x, y, shape)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function initParticles() {
+    for (let i = 0; i < particleCount; i++) {
+        let x, y;
+        let attempts = 0;
+        const maxAttempts = 100;
+        
+        // Try to find an empty position
+        do {
+            x = Math.random() * canvas.width;
+            y = Math.random() * canvas.height;
+            attempts++;
+        } while (isPositionOccupied(x, y) && attempts < maxAttempts);
+        
+        // Only add particle if we found a valid position
+        if (attempts < maxAttempts) {
+            particles.push({
+                x: x,
+                y: y,
+                vx: 0,
+                vy: 0
+            });
+        }
+    }
+}
+
+function updateParticleCountDisplay() {
+    particleCountDisplay.textContent = simulation.particleCount;
+}
+
+function resetSimulation() {
+    // Reset shapes to original positions first
+    simulation.resetShapes();
+    
+    // Then reinitialize particles with the current particle count
+    const particleCount = parseInt(particleCountSlider.value);
+    simulation.particleCount = particleCount;
+    simulation.init(currentPreset?.initType || 'random');
+    
+    updateParticleCountDisplay();
+}
+
 new ParticleAccelerator();
+
+// Load presets
+presets.forEach((preset, index) => {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-preset';
+    btn.textContent = preset.name;
+    
+    btn.addEventListener('click', () => {
+        currentPreset = preset;
+        
+        // Clear existing shapes
+        simulation.clearShapes();
+        
+        // Setup shapes using addShape to track initial states
+        if (preset.shapes) {
+            preset.shapes.forEach(shape => {
+                simulation.addShape({...shape}); // Clone to avoid reference issues
+            });
+        }
+        
+        // Setup sensor
+        simulation.sensor = preset.sensor || null;
+        
+        // Update header description
+        headerDescription.textContent = preset.description || '';
+        
+        // Reset simulation with new configuration
+        resetSimulation();
+    });
+    
+    // ...existing code...
+});
+
+clearShapesBtn.addEventListener('click', () => {
+    simulation.clearShapes();
+});

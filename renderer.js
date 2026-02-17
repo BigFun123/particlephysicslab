@@ -7,7 +7,6 @@ export class ParticleRenderer {
         this.velocityBuffer = null;
         this.particleSize = 2.0;
         this.glowIntensity = 1.0;
-        this.ctx2d = null;
     }
 
     async init() {
@@ -22,10 +21,6 @@ export class ParticleRenderer {
         }
 
         this.gl = gl;
-
-        // Create 2D context for shapes (using a temporary canvas)
-        const tempCanvas = document.createElement('canvas');
-        this.ctx2d = tempCanvas.getContext('2d');        
 
         const vertexShaderSource = `#version 300 es
             precision highp float;
@@ -278,27 +273,97 @@ export class ParticleRenderer {
     }
 
     drawShapes(shapes) {
-        if (shapes.length === 0) return;
-
-        const dpr = window.devicePixelRatio;
-
-        // Draw shapes using immediate mode rendering
+        if (!shapes || shapes.length === 0) return;
+        
+        const gl = this.gl;
+        
         shapes.forEach(shape => {
             if (shape.type === 'rect') {
-                const angle = shape.angle || 0;
-                this.drawRect(
-                    shape.x * dpr, 
-                    shape.y * dpr, 
-                    shape.width * dpr, 
-                    shape.height * dpr,
-                    angle
-                );
+                this.drawRect(shape.x, shape.y, shape.width, shape.height, shape.angle || 0);
+            } else if (shape.type === 'circle') {
+                this.drawCircle(shape.x, shape.y, shape.radius, shape.color || '#ffffff');
             }
         });
     }
 
+    drawCircle(x, y, radius, color) {
+        const gl = this.gl;
+        const dpr = window.devicePixelRatio || 1;
+
+        // Create circle shader program if not exists
+        if (!this.circleProgram) {
+            const vertexShader = this.createShader(gl.VERTEX_SHADER, `#version 300 es
+                precision highp float;
+                in vec2 a_position;
+                uniform vec2 u_resolution;
+                
+                void main() {
+                    vec2 clipSpace = (a_position / u_resolution) * 2.0 - 1.0;
+                    gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+                }
+            `);
+
+            const fragmentShader = this.createShader(gl.FRAGMENT_SHADER, `#version 300 es
+                precision highp float;
+                uniform vec3 u_color;
+                out vec4 fragColor;
+                
+                void main() {
+                    fragColor = vec4(u_color, 1.0);
+                }
+            `);
+
+            this.circleProgram = gl.createProgram();
+            gl.attachShader(this.circleProgram, vertexShader);
+            gl.attachShader(this.circleProgram, fragmentShader);
+            gl.linkProgram(this.circleProgram);
+
+            this.circleBuffer = gl.createBuffer();
+        }
+
+        gl.useProgram(this.circleProgram);
+
+        // Create circle vertices using triangle fan
+        const segments = 64;
+        const vertices = [x * dpr, y * dpr]; // Center point
+        
+        for (let i = 0; i <= segments; i++) {
+            const angle = (i / segments) * Math.PI * 2;
+            vertices.push(
+                (x + Math.cos(angle) * radius) * dpr,
+                (y + Math.sin(angle) * radius) * dpr
+            );
+        }
+
+        const posLoc = gl.getAttribLocation(this.circleProgram, 'a_position');
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.circleBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(posLoc);
+        gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+        const resLoc = gl.getUniformLocation(this.circleProgram, 'u_resolution');
+        gl.uniform2f(resLoc, this.canvas.width, this.canvas.height);
+
+        // Parse color (hex to RGB)
+        const colorLoc = gl.getUniformLocation(this.circleProgram, 'u_color');
+        const rgb = this.hexToRgb(color);
+        gl.uniform3f(colorLoc, rgb.r, rgb.g, rgb.b);
+
+        gl.drawArrays(gl.TRIANGLE_FAN, 0, vertices.length / 2);
+    }
+
+    hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16) / 255,
+            g: parseInt(result[2], 16) / 255,
+            b: parseInt(result[3], 16) / 255
+        } : { r: 1, g: 1, b: 1 };
+    }
+
     drawRect(x, y, width, height, angle = 0) {
         const gl = this.gl;
+        const dpr = window.devicePixelRatio || 1;
 
         // Create a simple shader program for rectangles if not exists
         if (!this.rectProgram) {
@@ -344,14 +409,20 @@ export class ParticleRenderer {
 
         gl.useProgram(this.rectProgram);
 
+        // Apply DPR scaling
+        const x1 = x * dpr;
+        const y1 = y * dpr;
+        const w = width * dpr;
+        const h = height * dpr;
+
         // Create rectangle vertices
         const vertices = new Float32Array([
-            x, y,
-            x + width, y,
-            x, y + height,
-            x, y + height,
-            x + width, y,
-            x + width, y + height
+            x1, y1,
+            x1 + w, y1,
+            x1, y1 + h,
+            x1, y1 + h,
+            x1 + w, y1,
+            x1 + w, y1 + h
         ]);
 
         const posLoc = gl.getAttribLocation(this.rectProgram, 'a_position');
@@ -364,8 +435,7 @@ export class ParticleRenderer {
         gl.uniform2f(resLoc, this.canvas.width, this.canvas.height);
 
         const centerLoc = gl.getUniformLocation(this.rectProgram, 'u_center');
-        gl.uniform2f(centerLoc, (x + width / 2) * (window.devicePixelRatio || 1), 
-                                (y + height / 2) * (window.devicePixelRatio || 1));
+        gl.uniform2f(centerLoc, (x + width / 2) * dpr, (y + height / 2) * dpr);
 
         const angleLoc = gl.getUniformLocation(this.rectProgram, 'u_angle');
         gl.uniform1f(angleLoc, angle);

@@ -14,6 +14,7 @@ export class ParticleSimulation {
         
         // Solid collision shapes
         this.shapes = [];
+        this.initialShapeStates = []; // Store initial states
         this.time = 0;
         
         // Sensor for particle detection
@@ -38,6 +39,23 @@ export class ParticleSimulation {
         if (this.sensor) {
             this.initSensor();
         }
+        
+        // Initialize circle physics
+        this.initCirclePhysics();
+    }
+
+    initCirclePhysics() {
+        this.shapes.forEach(shape => {
+            if (shape.type === 'circle' && shape.moveable) {
+                // Initialize velocity if not set
+                if (!shape.vx) shape.vx = 0;
+                if (!shape.vy) shape.vy = 0;
+                // Calculate mass based on radius if not set
+                if (!shape.mass) {
+                    shape.mass = Math.PI * shape.radius * shape.radius * 0.01; // Density factor
+                }
+            }
+        });
     }
 
     initSensor() {
@@ -50,22 +68,63 @@ export class ParticleSimulation {
         this.sensorHits.fill(0);
     }
 
+    isPointInShape(x, y, shape) {
+        const dx = x - shape.x;
+        const dy = y - shape.y;
+        
+        if (shape.type === 'circle') {
+            return Math.sqrt(dx * dx + dy * dy) <= shape.radius;
+        } else if (shape.type === 'rect') {
+            // For rectangles, check against the bounding box
+            return x >= shape.x && x <= shape.x + shape.width &&
+                   y >= shape.y && y <= shape.y + shape.height;
+        }
+        return false;
+    }
+
+    isPositionOccupied(x, y) {
+        for (const shape of this.shapes) {
+            if (this.isPointInShape(x, y, shape)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     initCenter() {
         const centerX = this.bounds.width / 2;
         const centerY = this.bounds.height / 2;
         const spawnRadius = 200;
 
-        for (let i = 0; i < this.particleCount; i++) {
+        let placed = 0;
+        let attempts = 0;
+        const maxTotalAttempts = this.particleCount * 100;
+
+        while (placed < this.particleCount && attempts < maxTotalAttempts) {
             const angle = Math.random() * Math.PI * 2;
             const radius = Math.random() * spawnRadius;
             
-            this.positions[i * 2] = centerX + Math.cos(angle) * radius;
-            this.positions[i * 2 + 1] = centerY + Math.sin(angle) * radius;
+            const x = centerX + Math.cos(angle) * radius;
+            const y = centerY + Math.sin(angle) * radius;
 
-            const speed = 50 + Math.random() * 150;
-            const velAngle = Math.random() * Math.PI * 2;
-            this.velocities[i * 2] = Math.cos(velAngle) * speed;
-            this.velocities[i * 2 + 1] = Math.sin(velAngle) * speed;
+            attempts++;
+
+            if (!this.isPositionOccupied(x, y)) {
+                this.positions[placed * 2] = x;
+                this.positions[placed * 2 + 1] = y;
+
+                const speed = 50 + Math.random() * 150;
+                const velAngle = Math.random() * Math.PI * 2;
+                this.velocities[placed * 2] = Math.cos(velAngle) * speed;
+                this.velocities[placed * 2 + 1] = Math.sin(velAngle) * speed;
+                
+                placed++;
+            }
+        }
+        
+        // Update particle count to actual placed particles
+        if (placed < this.particleCount) {
+            this.particleCount = placed;
         }
     }
 
@@ -74,26 +133,60 @@ export class ParticleSimulation {
         const spawnHeight = this.bounds.height * 0.6;
         const spawnY = (this.bounds.height - spawnHeight) / 2;
 
-        for (let i = 0; i < this.particleCount; i++) {
-            this.positions[i * 2] = spawnX + Math.random() * 50;
-            this.positions[i * 2 + 1] = spawnY + Math.random() * spawnHeight;
+        let placed = 0;
+        let attempts = 0;
+        const maxTotalAttempts = this.particleCount * 100;
 
-            const speed = 100 + Math.random() * 100;
-            const angle = (Math.random() - 0.5) * 0.3; // Slight angle variation
-            this.velocities[i * 2] = Math.cos(angle) * speed;
-            this.velocities[i * 2 + 1] = Math.sin(angle) * speed;
+        while (placed < this.particleCount && attempts < maxTotalAttempts) {
+            const x = spawnX + Math.random() * 50;
+            const y = spawnY + Math.random() * spawnHeight;
+
+            attempts++;
+
+            if (!this.isPositionOccupied(x, y)) {
+                this.positions[placed * 2] = x;
+                this.positions[placed * 2 + 1] = y;
+
+                const speed = 100 + Math.random() * 100;
+                const angle = (Math.random() - 0.5) * 0.3;
+                this.velocities[placed * 2] = Math.cos(angle) * speed;
+                this.velocities[placed * 2 + 1] = Math.sin(angle) * speed;
+                
+                placed++;
+            }
+        }
+        
+        if (placed < this.particleCount) {
+            this.particleCount = placed;
         }
     }
 
     initRandom() {
-        for (let i = 0; i < this.particleCount; i++) {
-            this.positions[i * 2] = Math.random() * this.bounds.width;
-            this.positions[i * 2 + 1] = Math.random() * this.bounds.height;
+        let placed = 0;
+        let attempts = 0;
+        const maxTotalAttempts = this.particleCount * 100;
 
-            const speed = 50 + Math.random() * 100;
-            const angle = Math.random() * Math.PI * 2;
-            this.velocities[i * 2] = Math.cos(angle) * speed;
-            this.velocities[i * 2 + 1] = Math.sin(angle) * speed;
+        while (placed < this.particleCount && attempts < maxTotalAttempts) {
+            const x = Math.random() * this.bounds.width;
+            const y = Math.random() * this.bounds.height;
+
+            attempts++;
+
+            if (!this.isPositionOccupied(x, y)) {
+                this.positions[placed * 2] = x;
+                this.positions[placed * 2 + 1] = y;
+
+                const speed = 50 + Math.random() * 100;
+                const angle = Math.random() * Math.PI * 2;
+                this.velocities[placed * 2] = Math.cos(angle) * speed;
+                this.velocities[placed * 2 + 1] = Math.sin(angle) * speed;
+                
+                placed++;
+            }
+        }
+        
+        if (placed < this.particleCount) {
+            this.particleCount = placed;
         }
     }
 
@@ -158,7 +251,87 @@ export class ParticleSimulation {
                 if (!shape.angle) shape.angle = 0;
                 shape.angle += shape.rotationSpeed * dt;
             }
+            
+            // Update moveable circles
+            if (shape.type === 'circle' && shape.moveable) {
+                // Update position based on velocity
+                shape.x += shape.vx * dt;
+                shape.y += shape.vy * dt;
+                
+                // Apply damping to circle velocity
+                shape.vx *= 0.995;
+                shape.vy *= 0.995;
+                
+                // Boundary collisions for circles
+                if (shape.x - shape.radius <= 0) {
+                    shape.x = shape.radius;
+                    shape.vx = Math.abs(shape.vx) * 0.8;
+                } else if (shape.x + shape.radius >= this.bounds.width) {
+                    shape.x = this.bounds.width - shape.radius;
+                    shape.vx = -Math.abs(shape.vx) * 0.8;
+                }
+                
+                if (shape.y - shape.radius <= 0) {
+                    shape.y = shape.radius;
+                    shape.vy = Math.abs(shape.vy) * 0.8;
+                } else if (shape.y + shape.radius >= this.bounds.height) {
+                    shape.y = this.bounds.height - shape.radius;
+                    shape.vy = -Math.abs(shape.vy) * 0.8;
+                }
+            }
         });
+        
+        // Check collisions between moveable circles
+        this.checkShapeCollisions();
+    }
+
+    checkShapeCollisions() {
+        const moveableCircles = this.shapes.filter(s => s.type === 'circle' && s.moveable);
+        
+        for (let i = 0; i < moveableCircles.length; i++) {
+            for (let j = i + 1; j < moveableCircles.length; j++) {
+                const c1 = moveableCircles[i];
+                const c2 = moveableCircles[j];
+                
+                const dx = c2.x - c1.x;
+                const dy = c2.y - c1.y;
+                const distSq = dx * dx + dy * dy;
+                const minDist = c1.radius + c2.radius;
+                const minDistSq = minDist * minDist;
+                
+                if (distSq < minDistSq && distSq > 0.01) {
+                    const dist = Math.sqrt(distSq);
+                    const nx = dx / dist;
+                    const ny = dy / dist;
+                    
+                    // Separate circles
+                    const overlap = minDist - dist;
+                    const totalMass = c1.mass + c2.mass;
+                    const ratio1 = c2.mass / totalMass;
+                    const ratio2 = c1.mass / totalMass;
+                    
+                    c1.x -= nx * overlap * ratio1;
+                    c1.y -= ny * overlap * ratio1;
+                    c2.x += nx * overlap * ratio2;
+                    c2.y += ny * overlap * ratio2;
+                    
+                    // Elastic collision response
+                    const dvx = c2.vx - c1.vx;
+                    const dvy = c2.vy - c1.vy;
+                    const dvDotN = dvx * nx + dvy * ny;
+                    
+                    if (dvDotN < 0) {
+                        // Calculate impulse based on masses
+                        const impulse = (2 * dvDotN) / totalMass;
+                        
+                        c1.vx += nx * impulse * c2.mass * 0.9;
+                        c1.vy += ny * impulse * c2.mass * 0.9;
+                        c2.vx -= nx * impulse * c1.mass * 0.9;
+                        c2.vy -= ny * impulse * c1.mass * 0.9;
+                    }
+                }
+            }
+        }
     }
 
     handleShapeCollisions(idx) {
@@ -168,13 +341,15 @@ export class ParticleSimulation {
 
         for (const shape of this.shapes) {
             if (shape.type === 'rect') {
-                if (shape.rotating && shape.angle) {
+                if (shape.rotating && shape.rotationSpeed) {
                     // Handle rotating rectangle collision
                     this.handleRotatingRectCollision(idx, shape, x, y, r);
                 } else {
                     // Handle static rectangle collision
                     this.handleStaticRectCollision(idx, shape, x, y, r);
                 }
+            } else if (shape.type === 'circle') {
+                this.handleCircleCollision(idx, shape, x, y, r);
             }
         }
     }
@@ -210,7 +385,7 @@ export class ParticleSimulation {
     }
 
     handleRotatingRectCollision(idx, shape, x, y, r) {
-        const {x: rx, y: ry, width: rw, height: rh, angle} = shape;
+        const {x: rx, y: ry, width: rw, height: rh, angle, rotationSpeed} = shape;
         
         // Calculate center of rectangle
         const centerX = rx + rw / 2;
@@ -248,10 +423,76 @@ export class ParticleSimulation {
                 this.positions[idx] += worldNx * overlap;
                 this.positions[idx + 1] += worldNy * overlap;
 
-                // Reflect velocity
-                const dot = this.velocities[idx] * worldNx + this.velocities[idx + 1] * worldNy;
-                this.velocities[idx] = (this.velocities[idx] - 2 * dot * worldNx) * this.damping;
-                this.velocities[idx + 1] = (this.velocities[idx + 1] - 2 * dot * worldNy) * this.damping;
+                // Calculate surface velocity at collision point
+                // Convert closest point back to world space
+                const worldClosestX = cos * closestX - sin * closestY + centerX;
+                const worldClosestY = sin * closestX + cos * closestY + centerY;
+                
+                // Calculate velocity of rotating surface at this point
+                // v = ω × r (cross product in 2D: perpendicular to radius)
+                const radiusX = worldClosestX - centerX;
+                const radiusY = worldClosestY - centerY;
+                
+                // Perpendicular velocity due to rotation (tangent to circle)
+                const surfaceVelX = -radiusY * rotationSpeed;
+                const surfaceVelY = radiusX * rotationSpeed;
+
+                // Reflect particle velocity relative to moving surface
+                const relativeVelX = this.velocities[idx] - surfaceVelX;
+                const relativeVelY = this.velocities[idx + 1] - surfaceVelY;
+                
+                const dot = relativeVelX * worldNx + relativeVelY * worldNy;
+                
+                if (dot < 0) {
+                    // Reflect relative velocity
+                    const reflectedRelVelX = relativeVelX - 2 * dot * worldNx;
+                    const reflectedRelVelY = relativeVelY - 2 * dot * worldNy;
+                    
+                    // Add surface velocity back and apply damping
+                    this.velocities[idx] = (reflectedRelVelX + surfaceVelX) * this.damping;
+                    this.velocities[idx + 1] = (reflectedRelVelY + surfaceVelY) * this.damping;
+                }
+            }
+        }
+    }
+
+    handleCircleCollision(idx, shape, x, y, r) {
+        const {x: cx, y: cy, radius} = shape;
+        
+        const dx = x - cx;
+        const dy = y - cy;
+        const distSq = dx * dx + dy * dy;
+        const combinedRadius = r + radius;
+        const combinedRadiusSq = combinedRadius * combinedRadius;
+
+        if (distSq < combinedRadiusSq && distSq > 0.01) {
+            const dist = Math.sqrt(distSq);
+            const nx = dx / dist;
+            const ny = dy / dist;
+            
+            // Push particle out
+            const overlap = combinedRadius - dist;
+            this.positions[idx] += nx * overlap;
+            this.positions[idx + 1] += ny * overlap;
+
+            // Reflect velocity
+            const dot = this.velocities[idx] * nx + this.velocities[idx + 1] * ny;
+            if (dot < 0) {
+                // Transfer momentum to circle if moveable
+                if (shape.moveable) {
+                    const particleMass = 1.0; // Assume unit mass for particles
+                    const circleMass = shape.mass || 1000;
+                    
+                    // Calculate momentum transfer
+                    const momentumTransfer = 2 * dot * particleMass / (particleMass + circleMass);
+                    
+                    // Apply momentum to circle
+                    shape.vx -= nx * momentumTransfer * 0.5; // 0.5 is transfer coefficient
+                    shape.vy -= ny * momentumTransfer * 0.5;
+                }
+                
+                this.velocities[idx] = (this.velocities[idx] - 2 * dot * nx) * this.damping;
+                this.velocities[idx + 1] = (this.velocities[idx + 1] - 2 * dot * ny) * this.damping;
             }
         }
     }
@@ -398,5 +639,45 @@ export class ParticleSimulation {
         const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denom;
         
         return t >= 0 && t <= 1 && u >= 0 && u <= 1;
+    }
+
+    addShape(shape) {
+        this.shapes.push(shape);
+        // Store initial state - make sure to capture all relevant properties
+        this.initialShapeStates.push({
+            x: shape.x,
+            y: shape.y,
+            width: shape.width,
+            height: shape.height,
+            radius: shape.radius,
+            vx: shape.vx || 0,
+            vy: shape.vy || 0,
+            angle: shape.angle || 0,
+            type: shape.type
+        });
+    }
+
+    resetShapes() {
+        for (let i = 0; i < this.shapes.length; i++) {
+            const shape = this.shapes[i];
+            const initialState = this.initialShapeStates[i];
+            
+            if (initialState) {
+                shape.x = initialState.x;
+                shape.y = initialState.y;
+                if (shape.type === 'circle' && shape.moveable) {
+                    shape.vx = initialState.vx;
+                    shape.vy = initialState.vy;
+                }
+                if (shape.rotating) {
+                    shape.angle = initialState.angle;
+                }
+            }
+        }
+    }
+
+    clearShapes() {
+        this.shapes = [];
+        this.initialShapeStates = [];
     }
 }

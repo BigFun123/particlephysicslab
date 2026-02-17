@@ -1,0 +1,1 @@
+particles should only initialize where there is empty space. existing shapes should not containe particles on startup.
