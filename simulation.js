@@ -33,9 +33,20 @@ export class ParticleSimulation {
         this.emitter = null;
         this.emitterAccumulator = 0;
         this.activeParticles = 0; // Track actually active particles
+        
+        // Edge collision behavior
+        this.wrapEdges = false;
     }
 
     init(initType = 'center') {
+        // If emitter is managing particles, skip re-allocating particle arrays
+        if (this.emitter && this.emitter.maxParticles && this.positions) {
+            if (this.sensor) this.initSensor();
+            this.initCirclePhysics();
+            this.initForceField();
+            return;
+        }
+        
         this.positions = new Float32Array(this.particleCount * 2);
         this.velocities = new Float32Array(this.particleCount * 2);
 
@@ -47,15 +58,11 @@ export class ParticleSimulation {
             this.initRandom();
         }
         
-        // Initialize sensor hit map if sensor exists
         if (this.sensor) {
             this.initSensor();
         }
         
-        // Initialize circle physics
         this.initCirclePhysics();
-        
-        // Initialize force field grid
         this.initForceField();
     }
 
@@ -86,6 +93,7 @@ export class ParticleSimulation {
     initForceField() {
         if (!this.showForceField) return;
         
+        // Use simulation bounds (in CSS pixels), not canvas resolution
         this.forceFieldWidth = Math.ceil(this.bounds.width / this.forceFieldResolution);
         this.forceFieldHeight = Math.ceil(this.bounds.height / this.forceFieldResolution);
         
@@ -219,27 +227,30 @@ export class ParticleSimulation {
         const dt = deltaTime * this.speedMultiplier;
         this.time += dt;
 
-        // Update rotating shapes
         this.updateShapes(dt);
         
-        // Update emitter if present
         if (this.emitter) {
             this.updateEmitter(dt);
         }
         
-        // Update force field if enabled
         if (this.showForceField) {
             this.updateForceField();
         }
 
-        // Decay sensor hits over time (slower decay for brighter persistence)
         if (this.sensorHits) {
             for (let i = 0; i < this.sensorHits.length; i++) {
-                this.sensorHits[i] *= 0.99; // Slower fade (was 0.98)
+                this.sensorHits[i] *= 0.99;
             }
         }
 
-        // Update positions
+        const maxX = this.bounds.width - this.particleRadius;
+        const maxY = this.bounds.height - this.particleRadius;
+        const minX = this.particleRadius;
+        const minY = this.particleRadius;
+        const wrap = this.wrapEdges; // Cache to avoid property lookup in loop
+        const w = this.bounds.width;
+        const h = this.bounds.height;
+
         for (let i = 0; i < this.particleCount; i++) {
             const idx = i * 2;
             
@@ -249,33 +260,43 @@ export class ParticleSimulation {
             this.positions[idx] += this.velocities[idx] * dt;
             this.positions[idx + 1] += this.velocities[idx + 1] * dt;
 
-            // Check sensor collision
             if (this.sensor) {
                 this.checkSensorHit(oldX, oldY, this.positions[idx], this.positions[idx + 1]);
             }
 
-            // Boundary collisions
-            if (this.positions[idx] <= this.particleRadius) {
-                this.positions[idx] = this.particleRadius;
-                this.velocities[idx] = Math.abs(this.velocities[idx]) * this.damping;
-            } else if (this.positions[idx] >= this.bounds.width - this.particleRadius) {
-                this.positions[idx] = this.bounds.width - this.particleRadius;
-                this.velocities[idx] = -Math.abs(this.velocities[idx]) * this.damping;
+            if (wrap) {
+                // Wrap particles to opposite side
+                if (this.positions[idx] < 0) {
+                    this.positions[idx] += w;
+                } else if (this.positions[idx] >= w) {
+                    this.positions[idx] -= w;
+                }
+                if (this.positions[idx + 1] < 0) {
+                    this.positions[idx + 1] += h;
+                } else if (this.positions[idx + 1] >= h) {
+                    this.positions[idx + 1] -= h;
+                }
+            } else {
+                if (this.positions[idx] <= minX) {
+                    this.positions[idx] = minX;
+                    this.velocities[idx] = Math.abs(this.velocities[idx]) * this.damping;
+                } else if (this.positions[idx] >= maxX) {
+                    this.positions[idx] = maxX;
+                    this.velocities[idx] = -Math.abs(this.velocities[idx]) * this.damping;
+                }
+
+                if (this.positions[idx + 1] <= minY) {
+                    this.positions[idx + 1] = minY;
+                    this.velocities[idx + 1] = Math.abs(this.velocities[idx + 1]) * this.damping;
+                } else if (this.positions[idx + 1] >= maxY) {
+                    this.positions[idx + 1] = maxY;
+                    this.velocities[idx + 1] = -Math.abs(this.velocities[idx + 1]) * this.damping;
+                }
             }
 
-            if (this.positions[idx + 1] <= this.particleRadius) {
-                this.positions[idx + 1] = this.particleRadius;
-                this.velocities[idx + 1] = Math.abs(this.velocities[idx + 1]) * this.damping;
-            } else if (this.positions[idx + 1] >= this.bounds.height - this.particleRadius) {
-                this.positions[idx + 1] = this.bounds.height - this.particleRadius;
-                this.velocities[idx + 1] = -Math.abs(this.velocities[idx + 1]) * this.damping;
-            }
-
-            // Shape collisions
             this.handleShapeCollisions(idx);
         }
 
-        // Collision detection with spatial hashing
         this.buildSpatialHash();
         this.detectCollisionsOptimized();
     }

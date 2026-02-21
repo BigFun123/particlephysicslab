@@ -159,6 +159,14 @@ export class UIController {
                 this.app.toggleForceField(e.target.checked);
             });
         }
+
+        // Wrap edges checkbox
+        const wrapEdgesCheckbox = document.getElementById('wrapEdgesCheckbox');
+        if (wrapEdgesCheckbox) {
+            wrapEdgesCheckbox.addEventListener('change', (e) => {
+                this.app.toggleWrapEdges(e.target.checked);
+            });
+        }
     }
 
     reloadPresetWithParticleCount(newParticleCount) {

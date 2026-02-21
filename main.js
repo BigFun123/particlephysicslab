@@ -36,21 +36,33 @@ class ParticleAccelerator {
             // Load first preset instead of hardcoded values
             const firstPreset = this.presetLoader.getPresetByIndex(0);
             if (firstPreset) {
+                const rect = this.canvas.getBoundingClientRect();
+                
                 this.simulation = new ParticleSimulation(firstPreset.particles);
-                this.simulation.bounds.width = this.canvas.getBoundingClientRect().width;
-                this.simulation.bounds.height = this.canvas.getBoundingClientRect().height;
+                this.simulation.bounds.width = rect.width;
+                this.simulation.bounds.height = rect.height;
                 this.simulation.shapes = firstPreset.shapes || [];
                 this.simulation.sensor = firstPreset.sensor || null;
                 
-                // Set emitter if present
+                // Set emitter if present - handle centering
                 if (firstPreset.emitter) {
-                    this.simulation.setEmitter(firstPreset.emitter);
+                    const emitter = {...firstPreset.emitter};
+                    if (emitter.x === -1) {
+                        emitter.x = rect.width / 2;
+                    }
+                    if (emitter.y === -1) {
+                        emitter.y = rect.height / 2;
+                    }
+                    this.simulation.setEmitter(emitter);
                 }
                 
                 // Set force field visibility from preset BEFORE init
                 if (firstPreset.showForceField !== undefined) {
                     this.simulation.showForceField = firstPreset.showForceField;
                 }
+                
+                // Set wrap edges from preset
+                this.simulation.wrapEdges = firstPreset.wrapEdges || false;
                 
                 this.simulation.init(firstPreset.initType || 'center');
                 
@@ -96,6 +108,14 @@ class ParticleAccelerator {
                             forceFieldCheckbox.checked = firstPresetData.showForceField;
                         }
                     }
+                    
+                    // Update wrap edges checkbox to match preset
+                    if (firstPresetData) {
+                        const wrapEdgesCheckbox = document.getElementById('wrapEdgesCheckbox');
+                        if (wrapEdgesCheckbox) {
+                            wrapEdgesCheckbox.checked = firstPresetData.wrapEdges || false;
+                        }
+                    }
                 }
             }, 100);
             
@@ -124,8 +144,14 @@ class ParticleAccelerator {
         }
         
         if (this.simulation) {
+            // Use CSS pixels for simulation bounds, not physical pixels
             this.simulation.bounds.width = rect.width;
             this.simulation.bounds.height = rect.height;
+            
+            // Reinitialize force field if it exists
+            if (this.simulation.showForceField) {
+                this.simulation.initForceField();
+            }
         }
     }
 
@@ -208,11 +234,27 @@ class ParticleAccelerator {
         
         this.simulation.sensor = preset.sensor || null;
         
-        // Set emitter if present
+        // Set wrap edges BEFORE setEmitter and init
+        this.simulation.wrapEdges = preset.wrapEdges || false;
+        
+        // Set emitter if present and adjust position if needed
         if (preset.emitter) {
-            this.simulation.setEmitter(preset.emitter);
+            const emitter = {...preset.emitter};
+            if (emitter.x === -1) emitter.x = rect.width / 2;
+            if (emitter.y === -1) emitter.y = rect.height / 2;
+            this.simulation.setEmitter(emitter);
         } else {
             this.simulation.setEmitter(null);
+        }
+        
+        // Adjust sensor position if needed
+        if (this.simulation.sensor) {
+            if (this.simulation.sensor.x === -1) {
+                this.simulation.sensor.x = (rect.width - this.simulation.sensor.width) / 2;
+            }
+            if (this.simulation.sensor.y === -1) {
+                this.simulation.sensor.y = (rect.height - this.simulation.sensor.height) / 2;
+            }
         }
         
         this.simulation.init(preset.initType || 'center');
@@ -263,7 +305,6 @@ class ParticleAccelerator {
         // Set force field visibility from preset
         if (preset.showForceField !== undefined) {
             this.simulation.setShowForceField(preset.showForceField);
-            // Update UI checkbox
             const forceFieldCheckbox = document.getElementById('forceFieldCheckbox');
             if (forceFieldCheckbox) {
                 forceFieldCheckbox.checked = preset.showForceField;
@@ -274,6 +315,12 @@ class ParticleAccelerator {
             if (forceFieldCheckbox) {
                 forceFieldCheckbox.checked = false;
             }
+        }
+        
+        // Update wrap edges checkbox (single declaration)
+        const wrapEdgesCheckbox = document.getElementById('wrapEdgesCheckbox');
+        if (wrapEdgesCheckbox) {
+            wrapEdgesCheckbox.checked = this.simulation.wrapEdges;
         }
         
         document.getElementById('particleCount').textContent = preset.particles.toLocaleString();
@@ -304,6 +351,10 @@ class ParticleAccelerator {
 
     toggleForceField(show) {
         this.simulation.setShowForceField(show);
+    }
+
+    toggleWrapEdges(wrap) {
+        this.simulation.wrapEdges = wrap;
     }
 }
 

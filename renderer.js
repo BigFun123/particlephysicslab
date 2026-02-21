@@ -31,13 +31,16 @@ export class ParticleRenderer {
             uniform vec2 u_resolution;
             uniform float u_pointSize;
             uniform float u_glowIntensity;
+            uniform float u_dpr;
             
             out vec4 v_color;
             
             void main() {
-                vec2 clipSpace = (a_position / u_resolution) * 2.0 - 1.0;
+                // Scale position by DPR before converting to clip space
+                vec2 scaledPos = a_position * u_dpr;
+                vec2 clipSpace = (scaledPos / u_resolution) * 2.0 - 1.0;
                 gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
-                gl_PointSize = u_pointSize * u_glowIntensity * 0.5;
+                gl_PointSize = u_pointSize * u_dpr * u_glowIntensity * 0.5;
                 
                 float speed = length(a_velocity);
                 float hue = clamp(speed * 0.002, 0.0, 1.0); // Adjusted for better speed to color mapping
@@ -173,10 +176,13 @@ export class ParticleRenderer {
         gl.uniform2f(resolutionLoc, this.canvas.width, this.canvas.height);
 
         const pointSizeLoc = gl.getUniformLocation(this.program, 'u_pointSize');
-        gl.uniform1f(pointSizeLoc, this.particleSize * window.devicePixelRatio);
+        gl.uniform1f(pointSizeLoc, this.particleSize);
 
         const glowIntensityLoc = gl.getUniformLocation(this.program, 'u_glowIntensity');
         gl.uniform1f(glowIntensityLoc, this.glowIntensity);
+
+        const dprLoc = gl.getUniformLocation(this.program, 'u_dpr');
+        gl.uniform1f(dprLoc, window.devicePixelRatio || 1);
 
         gl.drawArrays(gl.POINTS, 0, positions.length / 2);
     }
