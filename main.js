@@ -41,6 +41,17 @@ class ParticleAccelerator {
                 this.simulation.bounds.height = this.canvas.getBoundingClientRect().height;
                 this.simulation.shapes = firstPreset.shapes || [];
                 this.simulation.sensor = firstPreset.sensor || null;
+                
+                // Set emitter if present
+                if (firstPreset.emitter) {
+                    this.simulation.setEmitter(firstPreset.emitter);
+                }
+                
+                // Set force field visibility from preset BEFORE init
+                if (firstPreset.showForceField !== undefined) {
+                    this.simulation.showForceField = firstPreset.showForceField;
+                }
+                
                 this.simulation.init(firstPreset.initType || 'center');
                 
                 // Set renderer properties from preset
@@ -65,7 +76,7 @@ class ParticleAccelerator {
             // Create UI after presets are loaded
             this.ui = new UIController(this);
             
-            // Auto-select first preset button
+            // Auto-select first preset button and update UI checkbox
             setTimeout(() => {
                 const firstButton = document.querySelector('.btn-preset');
                 if (firstButton) {
@@ -76,6 +87,14 @@ class ParticleAccelerator {
                         const headerDescription = document.getElementById('headerDescription');
                         headerDescription.textContent = firstPresetData.description;
                         headerDescription.classList.add('visible');
+                    }
+                    
+                    // Update force field checkbox to match preset
+                    if (firstPresetData && firstPresetData.showForceField !== undefined) {
+                        const forceFieldCheckbox = document.getElementById('forceFieldCheckbox');
+                        if (forceFieldCheckbox) {
+                            forceFieldCheckbox.checked = firstPresetData.showForceField;
+                        }
                     }
                 }
             }, 100);
@@ -135,7 +154,12 @@ class ParticleAccelerator {
             this.simulation.velocities, 
             this.simulation.shapes,
             this.simulation.sensor,
-            this.simulation.sensorHits
+            this.simulation.sensorHits,
+            this.simulation.forceField,
+            this.simulation.forceFieldWidth,
+            this.simulation.forceFieldHeight,
+            this.simulation.forceFieldResolution,
+            this.simulation.emitter
         );
 
         requestAnimationFrame((time) => this.animate(time));
@@ -183,6 +207,14 @@ class ParticleAccelerator {
         }
         
         this.simulation.sensor = preset.sensor || null;
+        
+        // Set emitter if present
+        if (preset.emitter) {
+            this.simulation.setEmitter(preset.emitter);
+        } else {
+            this.simulation.setEmitter(null);
+        }
+        
         this.simulation.init(preset.initType || 'center');
         
         // Set glow intensity if specified, otherwise use brighter default
@@ -228,6 +260,22 @@ class ParticleAccelerator {
             document.getElementById('dampingValue').textContent = '0.80';
         }
         
+        // Set force field visibility from preset
+        if (preset.showForceField !== undefined) {
+            this.simulation.setShowForceField(preset.showForceField);
+            // Update UI checkbox
+            const forceFieldCheckbox = document.getElementById('forceFieldCheckbox');
+            if (forceFieldCheckbox) {
+                forceFieldCheckbox.checked = preset.showForceField;
+            }
+        } else {
+            this.simulation.setShowForceField(false);
+            const forceFieldCheckbox = document.getElementById('forceFieldCheckbox');
+            if (forceFieldCheckbox) {
+                forceFieldCheckbox.checked = false;
+            }
+        }
+        
         document.getElementById('particleCount').textContent = preset.particles.toLocaleString();
         document.getElementById('particleCountSlider').value = preset.particles;
         document.getElementById('particleCountValue').textContent = preset.particles.toLocaleString();
@@ -252,6 +300,10 @@ class ParticleAccelerator {
 
     setParticleSize(size) {
         this.renderer.particleSize = size;
+    }
+
+    toggleForceField(show) {
+        this.simulation.setShowForceField(show);
     }
 }
 

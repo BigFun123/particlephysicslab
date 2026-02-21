@@ -21,6 +21,18 @@ export class ParticleSimulation {
         this.sensor = null;
         this.sensorHits = null; // 2D array tracking hit intensity
         this.sensorResolution = 1; // Pixels per hit cell
+        
+        // Force field visualization
+        this.showForceField = false;
+        this.forceFieldResolution = 20; // Size of each grid cell in pixels
+        this.forceField = null;
+        this.forceFieldWidth = 0;
+        this.forceFieldHeight = 0;
+        
+        // Particle emitter
+        this.emitter = null;
+        this.emitterAccumulator = 0;
+        this.activeParticles = 0; // Track actually active particles
     }
 
     init(initType = 'center') {
@@ -42,6 +54,9 @@ export class ParticleSimulation {
         
         // Initialize circle physics
         this.initCirclePhysics();
+        
+        // Initialize force field grid
+        this.initForceField();
     }
 
     initCirclePhysics() {
@@ -66,6 +81,16 @@ export class ParticleSimulation {
         
         this.sensorHits = new Float32Array(width * height);
         this.sensorHits.fill(0);
+    }
+
+    initForceField() {
+        if (!this.showForceField) return;
+        
+        this.forceFieldWidth = Math.ceil(this.bounds.width / this.forceFieldResolution);
+        this.forceFieldHeight = Math.ceil(this.bounds.height / this.forceFieldResolution);
+        
+        this.forceField = new Float32Array(this.forceFieldWidth * this.forceFieldHeight);
+        this.forceField.fill(0);
     }
 
     isPointInShape(x, y, shape) {
@@ -196,6 +221,16 @@ export class ParticleSimulation {
 
         // Update rotating shapes
         this.updateShapes(dt);
+        
+        // Update emitter if present
+        if (this.emitter) {
+            this.updateEmitter(dt);
+        }
+        
+        // Update force field if enabled
+        if (this.showForceField) {
+            this.updateForceField();
+        }
 
         // Decay sensor hits over time (slower decay for brighter persistence)
         if (this.sensorHits) {
@@ -679,5 +714,139 @@ export class ParticleSimulation {
     clearShapes() {
         this.shapes = [];
         this.initialShapeStates = [];
+    }
+
+    updateForceField() {
+        // Reset force field
+        this.forceField.fill(0);
+        
+        // Calculate particle pressure in each grid cell
+        for (let i = 0; i < this.particleCount; i++) {
+            const x = this.positions[i * 2];
+            const y = this.positions[i * 2 + 1];
+            const vx = this.velocities[i * 2];
+            const vy = this.velocities[i * 2 + 1];
+            
+            // Get grid cell
+            const cellX = Math.floor(x / this.forceFieldResolution);
+            const cellY = Math.floor(y / this.forceFieldResolution);
+            
+            if (cellX >= 0 && cellX < this.forceFieldWidth && 
+                cellY >= 0 && cellY < this.forceFieldHeight) {
+                const index = cellY * this.forceFieldWidth + cellX;
+                
+                // Add particle momentum/force to cell
+                const speed = Math.sqrt(vx * vx + vy * vy);
+                this.forceField[index] += speed * 0.01; // Scale factor for visualization
+            }
+        }
+        
+        // Smooth the force field (optional - makes it look better)
+        this.smoothForceField();
+    }
+
+    smoothForceField() {
+        const smoothed = new Float32Array(this.forceField.length);
+        
+        for (let y = 0; y < this.forceFieldHeight; y++) {
+            for (let x = 0; x < this.forceFieldWidth; x++) {
+                const index = y * this.forceFieldWidth + x;
+                let sum = 0;
+                let count = 0;
+                
+                // Average with neighbors
+                for (let dy = -1; dy <= 1; dy++) {
+                    for (let dx = -1; dx <= 1; dx++) {
+                        const nx = x + dx;
+                        const ny = y + dy;
+                        
+                        if (nx >= 0 && nx < this.forceFieldWidth && 
+                            ny >= 0 && ny < this.forceFieldHeight) {
+                            const nIndex = ny * this.forceFieldWidth + nx;
+                            sum += this.forceField[nIndex];
+                            count++;
+                        }
+                    }
+                }
+                
+                smoothed[index] = sum / count;
+            }
+        }
+        
+        this.forceField = smoothed;
+    }
+
+    setShowForceField(show) {
+        this.showForceField = show;
+        if (show && !this.forceField) {
+            this.initForceField();
+        }
+    }
+
+    setEmitter(emitter) {
+        this.emitter = emitter;
+        this.emitterAccumulator = 0;
+        
+        // If emitter is set, initialize with max particles
+        if (emitter && emitter.maxParticles) {
+            this.particleCount = emitter.maxParticles;
+            this.positions = new Float32Array(this.particleCount * 2);
+            this.velocities = new Float32Array(this.particleCount * 2);
+            this.activeParticles = 0;
+            
+            // Fill positions off-screen initially
+            for (let i = 0; i < this.particleCount; i++) {
+                this.positions[i * 2] = -1000;
+                this.positions[i * 2 + 1] = -1000;
+                this.velocities[i * 2] = 0;
+                this.velocities[i * 2 + 1] = 0;
+            }
+        }
+    }
+
+    updateEmitter(dt) {
+        if (!this.emitter || !this.emitter.particlesPerSecond) return;
+        
+        // Accumulate time for particle emission
+        this.emitterAccumulator += dt;
+        
+        // Calculate how many particles to emit this frame
+        const emitInterval = 1.0 / this.emitter.particlesPerSecond;
+        let particlesToEmit = 0;
+        
+        while (this.emitterAccumulator >= emitInterval) {
+            particlesToEmit++;
+            this.emitterAccumulator -= emitInterval;
+        }
+        
+        // Emit particles
+        for (let i = 0; i < particlesToEmit; i++) {
+            // Check if we've reached max particles
+            if (this.emitter.maxParticles && this.activeParticles >= this.emitter.maxParticles) {
+                // Reuse oldest particle by shifting it to the emitter
+                this.emitParticle(0);
+            } else if (this.activeParticles < this.particleCount) {
+                // Emit new particle
+                this.emitParticle(this.activeParticles);
+                this.activeParticles++;
+            }
+        }
+    }
+
+    emitParticle(index) {
+        const idx = index * 2;
+        
+        // Random angle for emission
+        const angle = Math.random() * Math.PI * 2;
+        
+        // Position at emitter location with small random offset
+        const offsetRadius = Math.random() * this.emitter.radius * 0.5;
+        this.positions[idx] = this.emitter.x + Math.cos(angle) * offsetRadius;
+        this.positions[idx + 1] = this.emitter.y + Math.sin(angle) * offsetRadius;
+        
+        // Velocity in random direction
+        const speed = this.emitter.particleSpeed * (0.8 + Math.random() * 0.4);
+        this.velocities[idx] = Math.cos(angle) * speed;
+        this.velocities[idx + 1] = Math.sin(angle) * speed;
     }
 }

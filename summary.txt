@@ -1,5 +1,4 @@
 # ParticlePlayground - Application Summary
-## Based on the research by Karl R Lilje
 
 ## Overview
 ParticlePlayground is an interactive physics simulation application built with Python and Pygame. It provides a real-time particle physics sandbox with various forces, constraints, and interactive features.
@@ -36,12 +35,33 @@ ParticlePlayground is an interactive physics simulation application built with P
 - **Trails**: Motion trails showing particle paths over time
 - **Grid Overlay**: Reference grid for spatial awareness
 - **Force Field Visualization**: Shows active force fields and their intensity
+  - Displays a quantized grid (default 20x20 pixel cells) showing particle pressure/momentum distribution
+  - Color-coded gradient: dark blue (low force) → cyan → yellow → red (high force)
+  - Demonstrates the occlusion effect between shapes where fewer particles pass through
+  - Uses spatial averaging/smoothing for cleaner visualization
+  - Semi-transparent overlay (60% opacity) to not obscure particles
+  - Toggleable via UI checkbox or preset configuration
+  - Helps visualize the mechanism behind gravity simulation (pressure differences due to particle shadowing)
+
+### Solid Collision Shapes
+- **Rectangles**: Static or rotating barriers that particles bounce off
+- **Circles**: Static or moveable objects with mass-based physics
+- Shape-to-shape collision detection (circle-to-circle)
+- Rotating shapes impart tangential velocity to colliding particles
+- Moveable circles respond to particle impacts with momentum transfer
+- Mass-based elastic collisions between moveable circles
+
+### Sensors & Detection
+- **Particle Sensors**: Rectangular regions that detect and visualize particle hits
+- Heat map visualization showing particle interaction intensity
+- Temporal persistence with fade-out effect
+- Used for experiments like double-slit and cloud chamber simulations
 
 ### User Controls
 - Mouse-based particle creation and interaction
 - Keyboard shortcuts for toggling features:
   - Forces (attraction, repulsion, tornado)
-  - Visualization options (vectors, trails, grid)
+  - Visualization options (vectors, trails, grid, force field)
   - Physics parameters (gravity, friction)
   - Constraint creation modes
 - Real-time parameter adjustment via UI sliders/controls
@@ -51,11 +71,59 @@ ParticlePlayground is an interactive physics simulation application built with P
 - Configurable maximum particle count
 - Frame rate limiting and smooth rendering
 - Efficient update loops for large particle systems
+- WebGL2-based rendering for GPU-accelerated graphics
+
+## Force Field Implementation
+
+The force field visualization is implemented as a quantized grid overlay that represents the combined momentum/pressure of particles in each grid cell:
+
+### Data Structure
+- Grid resolution: configurable (default 20x20 pixels per cell)
+- Force field array: Float32Array storing accumulated force values per cell
+- Grid dimensions calculated based on canvas size and cell resolution
+
+### Calculation Process
+1. **Accumulation Phase** (per frame):
+   - Iterate through all particles
+   - Calculate particle speed: sqrt(vx² + vy²)
+   - Map particle position to grid cell coordinates
+   - Add scaled momentum (speed * 0.01) to corresponding cell
+
+2. **Smoothing Phase**:
+   - Apply 3x3 kernel averaging to each cell
+   - Average force values with 8 neighboring cells
+   - Produces smoother, more visually appealing gradient
+   - Reduces noise from individual particle movements
+
+3. **Rendering Phase**:
+   - WebGL2 shader program renders grid as textured quads
+   - Fragment shader maps force intensity to color gradient:
+     * 0.0-0.25: dark blue → blue
+     * 0.25-0.5: blue → cyan
+     * 0.5-0.75: cyan → yellow
+     * 0.75-1.0: yellow → red
+   - Semi-transparent blend (60% alpha) allows particles to show through
+
+### Physical Interpretation
+- **High Force (red/yellow)**: Areas with many fast-moving particles
+- **Low Force (blue)**: Areas with fewer or slower particles
+- **Occlusion Effect**: Gap between two solid shapes shows lower force (darker blue)
+  - Particles are blocked/absorbed by the shapes
+  - Creates "shadow" of reduced particle pressure
+  - This pressure differential is the mechanism for simulated gravity
+- Demonstrates Karl Lilje's theory: P = nkT, where gravitational attraction results from particle occlusion creating pressure imbalances
+
+### Configuration
+- Enabled/disabled via UI checkbox
+- Can be preset per simulation in presets.json: `"showForceField": true`
+- Force field initialized only when enabled to save memory
+- Updates every frame when active
 
 ## Technical Stack
-- **Python 3.x**: Core programming language
-- **Pygame**: Graphics rendering and event handling
-- **NumPy** (if used): Mathematical operations and vector calculations
+- **JavaScript ES6+**: Core programming language
+- **WebGL 2.0**: GPU-accelerated rendering
+- **Float32Array**: Efficient particle data storage
+- **Spatial Hashing**: Optimized collision detection
 
 ## Use Cases
 - Physics education and demonstration
@@ -63,11 +131,14 @@ ParticlePlayground is an interactive physics simulation application built with P
 - Interactive art and visualization
 - Algorithm testing for physics simulations
 - Prototyping game physics systems
+- Demonstrating alternative gravity theories
 
 ## File Structure
-- Main application code managing game loop and event handling
-- Particle class definitions with physics properties
-- Constraint/connection system implementations
-- Force calculation modules
-- Rendering and visualization components
-- Configuration and constants
+- main.js: Application lifecycle and animation loop
+- simulation.js: Particle physics engine, collision detection, force field calculation
+- renderer.js: WebGL rendering for particles, shapes, sensors, and force fields
+- ui.js: User interface controls and event handling
+- presetLoader.js: Preset configuration management
+- presets.json: Predefined simulation scenarios
+- index.html: Application structure
+- styles.css: Visual styling

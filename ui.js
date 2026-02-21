@@ -151,6 +151,14 @@ export class UIController {
         document.getElementById('clearShapesBtn').addEventListener('click', () => {
             this.app.clearShapes();
         });
+
+        // Force field checkbox
+        const forceFieldCheckbox = document.getElementById('forceFieldCheckbox');
+        if (forceFieldCheckbox) {
+            forceFieldCheckbox.addEventListener('change', (e) => {
+                this.app.toggleForceField(e.target.checked);
+            });
+        }
     }
 
     reloadPresetWithParticleCount(newParticleCount) {

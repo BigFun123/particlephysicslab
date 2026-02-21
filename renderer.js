@@ -128,12 +128,22 @@ export class ParticleRenderer {
         return program;
     }
 
-    render(positions, velocities, shapes = [], sensor = null, sensorHits = null) {
+    render(positions, velocities, shapes = [], sensor = null, sensorHits = null, forceField = null, forceFieldWidth = 0, forceFieldHeight = 0, forceFieldResolution = 20, emitter = null) {
         const gl = this.gl;
 
         gl.clear(gl.COLOR_BUFFER_BIT);
         
-        // Draw shapes first
+        // Draw force field first (as backdrop)
+        if (forceField && forceField.length > 0) {
+            this.drawForceField(forceField, forceFieldWidth, forceFieldHeight, forceFieldResolution);
+        }
+        
+        // Draw emitter
+        if (emitter) {
+            this.drawEmitter(emitter);
+        }
+        
+        // Draw shapes
         this.drawShapes(shapes);
         
         // Draw sensor with hit visualization
@@ -169,6 +179,116 @@ export class ParticleRenderer {
         gl.uniform1f(glowIntensityLoc, this.glowIntensity);
 
         gl.drawArrays(gl.POINTS, 0, positions.length / 2);
+    }
+
+    drawForceField(forceField, width, height, resolution) {
+        const gl = this.gl;
+        const dpr = window.devicePixelRatio || 1;
+
+        if (!this.forceFieldProgram) {
+            const vertexShader = this.createShader(gl.VERTEX_SHADER, `#version 300 es
+                precision highp float;
+                in vec2 a_position;
+                in float a_force;
+                uniform vec2 u_resolution;
+                out float v_force;
+                
+                void main() {
+                    vec2 clipSpace = (a_position / u_resolution) * 2.0 - 1.0;
+                    gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+                    v_force = a_force;
+                }
+            `);
+
+            const fragmentShader = this.createShader(gl.FRAGMENT_SHADER, `#version 300 es
+                precision highp float;
+                in float v_force;
+                out vec4 fragColor;
+                
+                void main() {
+                    // Color gradient from dark blue (low force) to bright red/yellow (high force)
+                    float intensity = clamp(v_force, 0.0, 1.0);
+                    
+                    vec3 color;
+                    if (intensity < 0.25) {
+                        // Dark blue to blue
+                        float t = intensity / 0.25;
+                        color = mix(vec3(0.0, 0.0, 0.1), vec3(0.0, 0.0, 0.5), t);
+                    } else if (intensity < 0.5) {
+                        // Blue to cyan
+                        float t = (intensity - 0.25) / 0.25;
+                        color = mix(vec3(0.0, 0.0, 0.5), vec3(0.0, 0.5, 0.5), t);
+                    } else if (intensity < 0.75) {
+                        // Cyan to yellow
+                        float t = (intensity - 0.5) / 0.25;
+                        color = mix(vec3(0.0, 0.5, 0.5), vec3(0.5, 0.5, 0.0), t);
+                    } else {
+                        // Yellow to red
+                        float t = (intensity - 0.75) / 0.25;
+                        color = mix(vec3(0.5, 0.5, 0.0), vec3(0.8, 0.0, 0.0), t);
+                    }
+                    
+                    fragColor = vec4(color, 0.6); // Semi-transparent
+                }
+            `);
+
+            this.forceFieldProgram = gl.createProgram();
+            gl.attachShader(this.forceFieldProgram, vertexShader);
+            gl.attachShader(this.forceFieldProgram, fragmentShader);
+            gl.linkProgram(this.forceFieldProgram);
+
+            this.forceFieldPositionBuffer = gl.createBuffer();
+            this.forceFieldForceBuffer = gl.createBuffer();
+        }
+
+        gl.useProgram(this.forceFieldProgram);
+
+        // Create vertices and force values for each cell
+        const vertices = [];
+        const forces = [];
+        
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const px = x * resolution * dpr;
+                const py = y * resolution * dpr;
+                const pw = resolution * dpr;
+                const ph = resolution * dpr;
+                
+                const index = y * width + x;
+                const force = forceField[index] || 0;
+                
+                // Two triangles per cell
+                vertices.push(
+                    px, py,
+                    px + pw, py,
+                    px, py + ph,
+                    px, py + ph,
+                    px + pw, py,
+                    px + pw, py + ph
+                );
+                
+                for (let i = 0; i < 6; i++) {
+                    forces.push(force);
+                }
+            }
+        }
+
+        const posLoc = gl.getAttribLocation(this.forceFieldProgram, 'a_position');
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.forceFieldPositionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.DYNAMIC_DRAW);
+        gl.enableVertexAttribArray(posLoc);
+        gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+        const forceLoc = gl.getAttribLocation(this.forceFieldProgram, 'a_force');
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.forceFieldForceBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(forces), gl.DYNAMIC_DRAW);
+        gl.enableVertexAttribArray(forceLoc);
+        gl.vertexAttribPointer(forceLoc, 1, gl.FLOAT, false, 0, 0);
+
+        const resLoc = gl.getUniformLocation(this.forceFieldProgram, 'u_resolution');
+        gl.uniform2f(resLoc, this.canvas.width, this.canvas.height);
+
+        gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 2);
     }
 
     drawSensor(sensor, sensorHits) {
@@ -441,6 +561,71 @@ export class ParticleRenderer {
         gl.uniform1f(angleLoc, angle);
 
         gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
+
+    drawEmitter(emitter) {
+        const gl = this.gl;
+        const dpr = window.devicePixelRatio || 1;
+
+        if (!this.emitterProgram) {
+            const vertexShader = this.createShader(gl.VERTEX_SHADER, `#version 300 es
+                precision highp float;
+                in vec2 a_position;
+                uniform vec2 u_resolution;
+                
+                void main() {
+                    vec2 clipSpace = (a_position / u_resolution) * 2.0 - 1.0;
+                    gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+                }
+            `);
+
+            const fragmentShader = this.createShader(gl.FRAGMENT_SHADER, `#version 300 es
+                precision highp float;
+                uniform vec3 u_color;
+                out vec4 fragColor;
+                
+                void main() {
+                    fragColor = vec4(u_color, 0.8);
+                }
+            `);
+
+            this.emitterProgram = gl.createProgram();
+            gl.attachShader(this.emitterProgram, vertexShader);
+            gl.attachShader(this.emitterProgram, fragmentShader);
+            gl.linkProgram(this.emitterProgram);
+
+            this.emitterBuffer = gl.createBuffer();
+        }
+
+        gl.useProgram(this.emitterProgram);
+
+        // Create circle vertices using triangle fan
+        const segments = 32;
+        const vertices = [emitter.x * dpr, emitter.y * dpr]; // Center point
+        
+        for (let i = 0; i <= segments; i++) {
+            const angle = (i / segments) * Math.PI * 2;
+            vertices.push(
+                (emitter.x + Math.cos(angle) * emitter.radius) * dpr,
+                (emitter.y + Math.sin(angle) * emitter.radius) * dpr
+            );
+        }
+
+        const posLoc = gl.getAttribLocation(this.emitterProgram, 'a_position');
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.emitterBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(posLoc);
+        gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+        const resLoc = gl.getUniformLocation(this.emitterProgram, 'u_resolution');
+        gl.uniform2f(resLoc, this.canvas.width, this.canvas.height);
+
+        // Parse color
+        const colorLoc = gl.getUniformLocation(this.emitterProgram, 'u_color');
+        const rgb = this.hexToRgb(emitter.color || '#ff8800');
+        gl.uniform3f(colorLoc, rgb.r, rgb.g, rgb.b);
+
+        gl.drawArrays(gl.TRIANGLE_FAN, 0, vertices.length / 2);
     }
 
     resize(width, height) {
