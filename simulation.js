@@ -315,24 +315,24 @@ export class ParticleSimulation {
                 shape.y += shape.vy * dt;
                 
                 // Apply damping to circle velocity
-                shape.vx *= 0.995;
-                shape.vy *= 0.995;
+                shape.vx *= 0.9999;
+                shape.vy *= 0.9999;
                 
-                // Boundary collisions for circles
+                // Soft boundary collisions - allow circles to move freely
                 if (shape.x - shape.radius <= 0) {
                     shape.x = shape.radius;
-                    shape.vx = Math.abs(shape.vx) * 0.8;
+                    shape.vx = Math.abs(shape.vx) * 0.5;
                 } else if (shape.x + shape.radius >= this.bounds.width) {
                     shape.x = this.bounds.width - shape.radius;
-                    shape.vx = -Math.abs(shape.vx) * 0.8;
+                    shape.vx = -Math.abs(shape.vx) * 0.5;
                 }
                 
                 if (shape.y - shape.radius <= 0) {
                     shape.y = shape.radius;
-                    shape.vy = Math.abs(shape.vy) * 0.8;
+                    shape.vy = Math.abs(shape.vy) * 0.5;
                 } else if (shape.y + shape.radius >= this.bounds.height) {
                     shape.y = this.bounds.height - shape.radius;
-                    shape.vy = -Math.abs(shape.vy) * 0.8;
+                    shape.vy = -Math.abs(shape.vy) * 0.5;
                 }
             }
         });
@@ -534,17 +534,16 @@ export class ParticleSimulation {
             // Reflect velocity
             const dot = this.velocities[idx] * nx + this.velocities[idx + 1] * ny;
             if (dot < 0) {
-                // Transfer momentum to circle if moveable
                 if (shape.moveable) {
-                    const particleMass = 1.0; // Assume unit mass for particles
+                    const particleMass = 1.0;
                     const circleMass = shape.mass || 1000;
                     
-                    // Calculate momentum transfer
-                    const momentumTransfer = 2 * dot * particleMass / (particleMass + circleMass);
+                    // Full momentum transfer using elastic collision formula
+                    const impulse = (2.0 * dot) / (1.0 + circleMass / particleMass);
                     
-                    // Apply momentum to circle
-                    shape.vx -= nx * momentumTransfer * 0.5; // 0.5 is transfer coefficient
-                    shape.vy -= ny * momentumTransfer * 0.5;
+                    // Apply impulse to circle (opposite direction - reaction)
+                    shape.vx += nx * impulse;
+                    shape.vy += ny * impulse;
                 }
                 
                 this.velocities[idx] = (this.velocities[idx] - 2 * dot * nx) * this.damping;
@@ -799,8 +798,15 @@ export class ParticleSimulation {
 
     setShowForceField(show) {
         this.showForceField = show;
-        if (show && !this.forceField) {
-            this.initForceField();
+        if (show) {
+            if (!this.forceField) {
+                this.initForceField();
+            }
+        } else {
+            // Clear force field data so renderer skips it
+            this.forceField = null;
+            this.forceFieldWidth = 0;
+            this.forceFieldHeight = 0;
         }
     }
 

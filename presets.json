@@ -222,33 +222,33 @@
         "description": "Any two objects have relatively fewer particles between them due to occlusion, causing gravitational attraction. The more particles, the stronger the gravity. P = n k T  . Karl Lilje 2016",
         "particles": 75000,
         "initType": "random",
-        "speed": 7.9,
-        "particleSize": 2.0,
-        "damping": 0.999,
+        "speed": 3.0,
+        "particleSize": 1.5,
+        "damping": 0.98,
         "wrapEdges": true,
         "showForceField": true,
         "shapes": [
             {
                 "type": "circle",
-                "x": 600,
+                "x": 550,
                 "y": 400,
-                "radius": 50,
+                "radius": 120,
                 "moveable": true,
-                "mass": 12000,
+                "mass": 300,
                 "vx": 0,
                 "vy": 0,
-                "color": "#111111"
+                "color": "#111133"
             },
             {
                 "type": "circle",
-                "x": 850,
+                "x": 900,
                 "y": 400,
-                "radius": 80,
+                "radius": 120,
                 "moveable": true,
-                "mass": 3200,
+                "mass": 300,
                 "vx": 0,
                 "vy": 0,
-                "color": "#333333"
+                "color": "#113311"
             }
         ]
     },
