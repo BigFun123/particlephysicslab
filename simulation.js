@@ -56,6 +56,8 @@ export class ParticleSimulation {
             this.initLeft();
         } else if (initType === 'random') {
             this.initRandom();
+        } else if (initType === 'static') {
+            this.initStatic();
         }
         
         if (this.sensor) {
@@ -69,10 +71,9 @@ export class ParticleSimulation {
     initCirclePhysics() {
         this.shapes.forEach(shape => {
             if (shape.type === 'circle' && shape.moveable) {
-                // Initialize velocity if not set
-                if (!shape.vx) shape.vx = 0;
-                if (!shape.vy) shape.vy = 0;
-                // Calculate mass based on radius if not set
+                // Only initialize if not already explicitly set
+                if (shape.vx === undefined) shape.vx = 0;
+                if (shape.vy === undefined) shape.vy = 0;
                 if (!shape.mass) {
                     shape.mass = Math.PI * shape.radius * shape.radius * 0.01; // Density factor
                 }
@@ -223,6 +224,32 @@ export class ParticleSimulation {
         }
     }
 
+    initStatic() {
+        let placed = 0;
+        let attempts = 0;
+        const maxTotalAttempts = this.particleCount * 100;
+
+        while (placed < this.particleCount && attempts < maxTotalAttempts) {
+            const x = Math.random() * this.bounds.width;
+            const y = Math.random() * this.bounds.height;
+
+            attempts++;
+
+            if (!this.isPositionOccupied(x, y)) {
+                this.positions[placed * 2] = x;
+                this.positions[placed * 2 + 1] = y;
+                // Zero velocity - particles only move when hit
+                this.velocities[placed * 2] = 0;
+                this.velocities[placed * 2 + 1] = 0;
+                placed++;
+            }
+        }
+
+        if (placed < this.particleCount) {
+            this.particleCount = placed;
+        }
+    }
+
     update(deltaTime) {
         const dt = deltaTime * this.speedMultiplier;
         this.time += dt;
@@ -319,20 +346,23 @@ export class ParticleSimulation {
                 shape.vy *= 0.9999;
                 
                 // Soft boundary collisions - allow circles to move freely
+                const bounceFactorX = shape.bounceX ? 1.0 : 0.5;
+                const bounceFactorY = shape.bounceY ? 1.0 : 0.5;
+
                 if (shape.x - shape.radius <= 0) {
                     shape.x = shape.radius;
-                    shape.vx = Math.abs(shape.vx) * 0.5;
+                    shape.vx = Math.abs(shape.vx) * bounceFactorX;
                 } else if (shape.x + shape.radius >= this.bounds.width) {
                     shape.x = this.bounds.width - shape.radius;
-                    shape.vx = -Math.abs(shape.vx) * 0.5;
+                    shape.vx = -Math.abs(shape.vx) * bounceFactorX;
                 }
                 
                 if (shape.y - shape.radius <= 0) {
                     shape.y = shape.radius;
-                    shape.vy = Math.abs(shape.vy) * 0.5;
+                    shape.vy = Math.abs(shape.vy) * bounceFactorY;
                 } else if (shape.y + shape.radius >= this.bounds.height) {
                     shape.y = this.bounds.height - shape.radius;
-                    shape.vy = -Math.abs(shape.vy) * 0.5;
+                    shape.vy = -Math.abs(shape.vy) * bounceFactorY;
                 }
             }
         });
@@ -698,17 +728,18 @@ export class ParticleSimulation {
 
     addShape(shape) {
         this.shapes.push(shape);
-        // Store initial state - make sure to capture all relevant properties
         this.initialShapeStates.push({
             x: shape.x,
             y: shape.y,
             width: shape.width,
             height: shape.height,
             radius: shape.radius,
-            vx: shape.vx || 0,
-            vy: shape.vy || 0,
+            vx: shape.vx !== undefined ? shape.vx : 0,
+            vy: shape.vy !== undefined ? shape.vy : 0,
             angle: shape.angle || 0,
-            type: shape.type
+            type: shape.type,
+            bounceX: shape.bounceX || false,
+            bounceY: shape.bounceY || false
         });
     }
 

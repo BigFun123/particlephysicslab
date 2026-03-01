@@ -19,6 +19,7 @@ class ParticleAccelerator {
         this.frameCount = 0;
         this.fpsTime = 0;
         
+        this.mouseShape = null;
         this.init();
     }
 
@@ -119,12 +120,55 @@ class ParticleAccelerator {
                 }
             }, 100);
             
+            this.setupMouseInteraction();
             this.isRunning = true;
             this.animate(0);
         } catch (error) {
             console.error('Failed to initialize:', error);
             alert('Failed to initialize WebGL. Please use a modern browser with WebGL support.');
         }
+    }
+
+    setupMouseInteraction() {
+        const canvas = this.canvas;
+
+        const getSimPos = (e) => {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+        };
+
+        canvas.addEventListener('mousedown', (e) => {
+            const pos = getSimPos(e);
+            this.mouseShape = {
+                type: 'circle',
+                x: pos.x,
+                y: pos.y,
+                radius: 50,
+                moveable: false,
+                color: '#445566'
+            };
+            this.simulation.shapes.push(this.mouseShape);
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!this.mouseShape) return;
+            const pos = getSimPos(e);
+            this.mouseShape.x = pos.x;
+            this.mouseShape.y = pos.y;
+        });
+
+        const removeMouseShape = () => {
+            if (!this.mouseShape) return;
+            const idx = this.simulation.shapes.indexOf(this.mouseShape);
+            if (idx !== -1) this.simulation.shapes.splice(idx, 1);
+            this.mouseShape = null;
+        };
+
+        canvas.addEventListener('mouseup', removeMouseShape);
+        canvas.addEventListener('mouseleave', removeMouseShape);
     }
 
     resizeCanvas() {
