@@ -89,37 +89,6 @@ class ParticleAccelerator {
             // Create UI after presets are loaded
             this.ui = new UIController(this);
             
-            // Auto-select first preset button and update UI checkbox
-            setTimeout(() => {
-                const firstButton = document.querySelector('.btn-preset');
-                if (firstButton) {
-                    firstButton.classList.add('active');
-                    this.ui.currentPresetIndex = 0;
-                    const firstPresetData = this.presetLoader.getPresetByIndex(0);
-                    if (firstPresetData && firstPresetData.description) {
-                        const headerDescription = document.getElementById('headerDescription');
-                        headerDescription.textContent = firstPresetData.description;
-                        headerDescription.classList.add('visible');
-                    }
-                    
-                    // Update force field checkbox to match preset
-                    if (firstPresetData && firstPresetData.showForceField !== undefined) {
-                        const forceFieldCheckbox = document.getElementById('forceFieldCheckbox');
-                        if (forceFieldCheckbox) {
-                            forceFieldCheckbox.checked = firstPresetData.showForceField;
-                        }
-                    }
-                    
-                    // Update wrap edges checkbox to match preset
-                    if (firstPresetData) {
-                        const wrapEdgesCheckbox = document.getElementById('wrapEdgesCheckbox');
-                        if (wrapEdgesCheckbox) {
-                            wrapEdgesCheckbox.checked = firstPresetData.wrapEdges || false;
-                        }
-                    }
-                }
-            }, 100);
-            
             this.setupMouseInteraction();
             this.isRunning = true;
             this.animate(0);
@@ -366,6 +335,15 @@ class ParticleAccelerator {
         if (wrapEdgesCheckbox) {
             wrapEdgesCheckbox.checked = this.simulation.wrapEdges;
         }
+
+        // Set particle collisions flag
+        this.simulation.particleCollisions = preset.particleCollisions !== false;
+
+        // Update particle collisions checkbox
+        const particleCollisionsCheckbox = document.getElementById('particleCollisionsCheckbox');
+        if (particleCollisionsCheckbox) {
+            particleCollisionsCheckbox.checked = this.simulation.particleCollisions;
+        }
         
         document.getElementById('particleCount').textContent = preset.particles.toLocaleString();
         document.getElementById('particleCountSlider').value = preset.particles;
@@ -399,6 +377,10 @@ class ParticleAccelerator {
 
     toggleWrapEdges(wrap) {
         this.simulation.wrapEdges = wrap;
+    }
+
+    toggleParticleCollisions(enabled) {
+        this.simulation.particleCollisions = enabled;
     }
 }
 

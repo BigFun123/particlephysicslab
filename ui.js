@@ -47,11 +47,8 @@ export class UIController {
             button.textContent = preset.name;
             button.dataset.presetIndex = index;
             button.addEventListener('click', () => {
-                // Store current preset
                 this.currentPreset = preset;
                 this.currentPresetIndex = index;
-                
-                console.log('Loading preset:', preset.name);
                 this.app.loadPreset(index);
                 this.showPresetDescription(preset, button);
             });
@@ -62,7 +59,26 @@ export class UIController {
         // Insert all buttons after title in one operation
         title.after(buttonContainer);
 
-        console.log('Preset buttons created successfully');
+        // Auto-select the first button
+        const firstButton = presetSection.querySelector('.btn-preset');
+        if (firstButton) {
+            const firstPreset = presets[0];
+            this.activePresetButton = firstButton;
+            firstButton.classList.add('active');
+            this.currentPresetIndex = 0;
+            this.currentPreset = firstPreset;
+
+            const headerDescription = document.getElementById('headerDescription');
+            if (firstPreset.description) {
+                headerDescription.textContent = firstPreset.description;
+                headerDescription.classList.add('visible');
+            }
+            const headerEquation = document.getElementById('headerEquation');
+            if (firstPreset.equation) {
+                headerEquation.textContent = firstPreset.equation;
+                headerEquation.classList.add('visible');
+            }
+        }
     }
 
     showPresetDescription(preset, button) {
@@ -85,6 +101,15 @@ export class UIController {
         } else {
             headerDescription.textContent = '';
             headerDescription.classList.remove('visible');
+        }
+
+        const headerEquation = document.getElementById('headerEquation');
+        if (preset.equation) {
+            headerEquation.textContent = preset.equation;
+            headerEquation.classList.add('visible');
+        } else {
+            headerEquation.textContent = '';
+            headerEquation.classList.remove('visible');
         }
     }
 
@@ -165,6 +190,14 @@ export class UIController {
         if (wrapEdgesCheckbox) {
             wrapEdgesCheckbox.addEventListener('change', (e) => {
                 this.app.toggleWrapEdges(e.target.checked);
+            });
+        }
+
+        // Particle collisions checkbox
+        const particleCollisionsCheckbox = document.getElementById('particleCollisionsCheckbox');
+        if (particleCollisionsCheckbox) {
+            particleCollisionsCheckbox.addEventListener('change', (e) => {
+                this.app.toggleParticleCollisions(e.target.checked);
             });
         }
     }

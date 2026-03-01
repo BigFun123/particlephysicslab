@@ -36,6 +36,7 @@ export class ParticleSimulation {
         
         // Edge collision behavior
         this.wrapEdges = false;
+        this.particleCollisions = true;
     }
 
     init(initType = 'center') {
@@ -324,8 +325,10 @@ export class ParticleSimulation {
             this.handleShapeCollisions(idx);
         }
 
-        this.buildSpatialHash();
-        this.detectCollisionsOptimized();
+        if (this.particleCollisions) {
+            this.buildSpatialHash();
+            this.detectCollisionsOptimized();
+        }
     }
 
     updateShapes(dt) {
@@ -345,7 +348,20 @@ export class ParticleSimulation {
                 shape.vx *= 0.9999;
                 shape.vy *= 0.9999;
                 
-                // Soft boundary collisions - allow circles to move freely
+                // If constantSpeed, restore speed magnitude after damping/collisions
+                if (shape.constantSpeed) {
+                    const currentSpeed = Math.sqrt(shape.vx * shape.vx + shape.vy * shape.vy);
+                    if (currentSpeed > 0.01) {
+                        const scale = shape.constantSpeed / currentSpeed;
+                        shape.vx *= scale;
+                        shape.vy *= scale;
+                    } else {
+                        // Restore from initial state if stalled
+                        shape.vx = shape.constantSpeed;
+                        shape.vy = 0;
+                    }
+                }
+
                 const bounceFactorX = shape.bounceX ? 1.0 : 0.5;
                 const bounceFactorY = shape.bounceY ? 1.0 : 0.5;
 
@@ -407,13 +423,14 @@ export class ParticleSimulation {
                     const dvDotN = dvx * nx + dvy * ny;
                     
                     if (dvDotN < 0) {
-                        // Calculate impulse based on masses
-                        const impulse = (2 * dvDotN) / totalMass;
-                        
-                        c1.vx += nx * impulse * c2.mass * 0.9;
-                        c1.vy += ny * impulse * c2.mass * 0.9;
-                        c2.vx -= nx * impulse * c1.mass * 0.9;
-                        c2.vy -= ny * impulse * c1.mass * 0.9;
+                        // Apply a small damping effect scaled from the damping property
+                        // damping=1.0 means fully elastic, damping=0.0 means fully inelastic
+                        const restitution = 0.5 + this.damping * 0.5; // maps [0,1] -> [0.5, 1.0]
+                        const impulse = dvDotN * restitution;
+                        c1.vx += nx * impulse * ratio1;
+                        c1.vy += ny * impulse * ratio1;
+                        c2.vx -= nx * impulse * ratio2;
+                        c2.vy -= ny * impulse * ratio2;
                     }
                 }
             }
@@ -435,7 +452,61 @@ export class ParticleSimulation {
                     this.handleStaticRectCollision(idx, shape, x, y, r);
                 }
             } else if (shape.type === 'circle') {
-                this.handleCircleCollision(idx, shape, x, y, r);
+                if (shape.absorb) {
+                    this.handleAbsorbCircle(idx, shape, x, y);
+                } else {
+                    this.handleCircleCollision(idx, shape, x, y, r);
+                }
+            }
+        }
+    }
+
+    handleAbsorbCircle(idx, shape, x, y) {
+        const dx = x - shape.x;
+        const dy = y - shape.y;
+        const distSq = dx * dx + dy * dy;
+
+        if (distSq < shape.radius * shape.radius) {
+            // Apply momentum transfer to shape before teleporting particle
+            if (shape.moveable) {
+                const circleMass = shape.mass || 1000;
+                const particleMass = 1.0;
+                // Transfer particle momentum to shape (inelastic absorption)
+                shape.vx += (this.velocities[idx] * particleMass) / circleMass;
+                shape.vy += (this.velocities[idx + 1] * particleMass) / circleMass;
+            }
+
+            // Teleport particle to a random position away from all absorbing circles
+            let placed = false;
+            for (let attempt = 0; attempt < 20; attempt++) {
+                const rx = Math.random() * this.bounds.width;
+                const ry = Math.random() * this.bounds.height;
+                let inside = false;
+                for (const s of this.shapes) {
+                    if (s.absorb && s.type === 'circle') {
+                        const ddx = rx - s.x;
+                        const ddy = ry - s.y;
+                        if (ddx * ddx + ddy * ddy < s.radius * s.radius) {
+                            inside = true;
+                            break;
+                        }
+                    }
+                }
+                if (!inside) {
+                    this.positions[idx] = rx;
+                    this.positions[idx + 1] = ry;
+                    const speed = 50 + Math.random() * 100;
+                    const angle = Math.random() * Math.PI * 2;
+                    this.velocities[idx] = Math.cos(angle) * speed;
+                    this.velocities[idx + 1] = Math.sin(angle) * speed;
+                    placed = true;
+                    break;
+                }
+            }
+            if (!placed) {
+                // Fallback: just push to edge
+                this.positions[idx] = Math.random() * this.bounds.width;
+                this.positions[idx + 1] = 0;
             }
         }
     }
@@ -443,29 +514,92 @@ export class ParticleSimulation {
     handleStaticRectCollision(idx, shape, x, y, r) {
         const {x: rx, y: ry, width: rw, height: rh} = shape;
 
-        // Find closest point on rectangle to particle
-        const closestX = Math.max(rx, Math.min(x, rx + rw));
-        const closestY = Math.max(ry, Math.min(y, ry + rh));
+        // Expand rectangle by particle radius for swept test
+        const ex = rx - r;
+        const ey = ry - r;
+        const ew = rw + r * 2;
+        const eh = rh + r * 2;
 
-        const dx = x - closestX;
-        const dy = y - closestY;
+        // Current position
+        const cx = this.positions[idx];
+        const cy = this.positions[idx + 1];
+
+        // Find closest point on expanded rectangle to particle
+        const closestX = Math.max(ex, Math.min(cx, ex + ew));
+        const closestY = Math.max(ey, Math.min(cy, ey + eh));
+
+        const dx = cx - closestX;
+        const dy = cy - closestY;
         const distSq = dx * dx + dy * dy;
 
-        if (distSq < r * r) {
-            const dist = Math.sqrt(distSq);
-            if (dist > 0.01) {
-                // Push particle out
-                const nx = dx / dist;
-                const ny = dy / dist;
-                const overlap = r - dist;
+        if (distSq < r * r || (cx >= rx && cx <= rx + rw && cy >= ry && cy <= ry + rh)) {
+            // Standard push-out resolution
+            const closestX2 = Math.max(rx, Math.min(cx, rx + rw));
+            const closestY2 = Math.max(ry, Math.min(cy, ry + rh));
+            const dx2 = cx - closestX2;
+            const dy2 = cy - closestY2;
+            const dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
 
-                this.positions[idx] += nx * overlap;
-                this.positions[idx + 1] += ny * overlap;
-
-                // Reflect velocity
+            if (dist2 > 0.01) {
+                const nx = dx2 / dist2;
+                const ny = dy2 / dist2;
+                const overlap = r - dist2;
+                this.positions[idx] += nx * (overlap + 0.1);
+                this.positions[idx + 1] += ny * (overlap + 0.1);
                 const dot = this.velocities[idx] * nx + this.velocities[idx + 1] * ny;
-                this.velocities[idx] = (this.velocities[idx] - 2 * dot * nx) * this.damping;
-                this.velocities[idx + 1] = (this.velocities[idx + 1] - 2 * dot * ny) * this.damping;
+                if (dot < 0) {
+                    this.velocities[idx] = (this.velocities[idx] - 2 * dot * nx) * this.damping;
+                    this.velocities[idx + 1] = (this.velocities[idx + 1] - 2 * dot * ny) * this.damping;
+                }
+            } else {
+                // Particle is inside rect - push out through nearest face
+                const dLeft = cx - rx;
+                const dRight = (rx + rw) - cx;
+                const dTop = cy - ry;
+                const dBottom = (ry + rh) - cy;
+                const minD = Math.min(dLeft, dRight, dTop, dBottom);
+                if (minD === dLeft) {
+                    this.positions[idx] = rx - r;
+                    this.velocities[idx] = -Math.abs(this.velocities[idx]) * this.damping;
+                } else if (minD === dRight) {
+                    this.positions[idx] = rx + rw + r;
+                    this.velocities[idx] = Math.abs(this.velocities[idx]) * this.damping;
+                } else if (minD === dTop) {
+                    this.positions[idx + 1] = ry - r;
+                    this.velocities[idx + 1] = -Math.abs(this.velocities[idx + 1]) * this.damping;
+                } else {
+                    this.positions[idx + 1] = ry + rh + r;
+                    this.velocities[idx + 1] = Math.abs(this.velocities[idx + 1]) * this.damping;
+                }
+            }
+            return;
+        }
+
+        // Swept test: check if particle path crosses rectangle
+        const prevX = x;
+        const prevY = y;
+        if (prevX === cx && prevY === cy) return;
+
+        // Check if path segment intersects expanded rectangle
+        if (this.lineIntersectsRect(prevX, prevY, cx, cy, ex, ey, ew, eh)) {
+            // Find which face was hit by checking velocity direction
+            const vx = this.velocities[idx];
+            const vy = this.velocities[idx + 1];
+
+            // Determine dominant collision axis
+            let nx = 0, ny = 0;
+            if (Math.abs(vx) > Math.abs(vy)) {
+                nx = vx > 0 ? -1 : 1;
+                this.positions[idx] = nx > 0 ? rx - r : rx + rw + r;
+            } else {
+                ny = vy > 0 ? -1 : 1;
+                this.positions[idx + 1] = ny > 0 ? ry - r : ry + rh + r;
+            }
+
+            const dot = vx * nx + vy * ny;
+            if (dot < 0) {
+                this.velocities[idx] = (vx - 2 * dot * nx) * this.damping;
+                this.velocities[idx + 1] = (vy - 2 * dot * ny) * this.damping;
             }
         }
     }
@@ -543,6 +677,9 @@ export class ParticleSimulation {
     }
 
     handleCircleCollision(idx, shape, x, y, r) {
+        // Ghost shapes don't collide with particles (for gravity shadow effect)
+        if (shape.ghost) return;
+        
         const {x: cx, y: cy, radius} = shape;
         
         const dx = x - cx;
@@ -561,23 +698,32 @@ export class ParticleSimulation {
             this.positions[idx] += nx * overlap;
             this.positions[idx + 1] += ny * overlap;
 
-            // Reflect velocity
-            const dot = this.velocities[idx] * nx + this.velocities[idx + 1] * ny;
-            if (dot < 0) {
-                if (shape.moveable) {
-                    const particleMass = 1.0;
-                    const circleMass = shape.mass || 1000;
-                    
-                    // Full momentum transfer using elastic collision formula
-                    const impulse = (2.0 * dot) / (1.0 + circleMass / particleMass);
-                    
-                    // Apply impulse to circle (opposite direction - reaction)
-                    shape.vx += nx * impulse;
-                    shape.vy += ny * impulse;
+            if (shape.moveable) {
+                const circleMass = shape.mass || 1000;
+                const particleMass = 1.0;
+                const totalMass = circleMass + particleMass;
+
+                // Relative velocity of particle with respect to circle surface
+                const relVx = this.velocities[idx] - shape.vx;
+                const relVy = this.velocities[idx + 1] - shape.vy;
+                const relDotN = relVx * nx + relVy * ny;
+
+                if (relDotN < 0) {
+                    // Full elastic impulse with mass ratio
+                    const impulse = (2.0 * relDotN) / totalMass;
+
+                    this.velocities[idx] -= nx * impulse * circleMass;
+                    this.velocities[idx + 1] -= ny * impulse * circleMass;
+                    shape.vx += nx * impulse * particleMass;
+                    shape.vy += ny * impulse * particleMass;
                 }
-                
-                this.velocities[idx] = (this.velocities[idx] - 2 * dot * nx) * this.damping;
-                this.velocities[idx + 1] = (this.velocities[idx + 1] - 2 * dot * ny) * this.damping;
+            } else {
+                // Static circle - plain reflection with damping
+                const dot = this.velocities[idx] * nx + this.velocities[idx + 1] * ny;
+                if (dot < 0) {
+                    this.velocities[idx] = (this.velocities[idx] - 2 * dot * nx) * this.damping;
+                    this.velocities[idx + 1] = (this.velocities[idx + 1] - 2 * dot * ny) * this.damping;
+                }
             }
         }
     }
@@ -669,7 +815,10 @@ export class ParticleSimulation {
             const dvDotN = dvx * nx + dvy * ny;
 
             if (dvDotN < 0) {
-                const impulse = dvDotN * this.damping;
+                // Apply a small damping effect scaled from the damping property
+                // damping=1.0 means fully elastic, damping=0.0 means fully inelastic
+                const restitution = 0.5 + this.damping * 0.5; // maps [0,1] -> [0.5, 1.0]
+                const impulse = dvDotN * restitution;
                 this.velocities[idx1] += nx * impulse;
                 this.velocities[idx1 + 1] += ny * impulse;
                 this.velocities[idx2] -= nx * impulse;
@@ -788,7 +937,7 @@ export class ParticleSimulation {
                 
                 // Add particle momentum/force to cell
                 const speed = Math.sqrt(vx * vx + vy * vy);
-                this.forceField[index] += speed * 0.01; // Scale factor for visualization
+                this.forceField[index] += speed * 0.1; // Increased from 0.01 for wider range
             }
         }
         

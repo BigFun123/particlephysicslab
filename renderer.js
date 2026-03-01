@@ -212,24 +212,20 @@ export class ParticleRenderer {
                 out vec4 fragColor;
                 
                 void main() {
-                    // Color gradient from dark blue (low force) to bright red/yellow (high force)
-                    float intensity = clamp(v_force, 0.0, 1.0);
+                    // Logarithmic scale to show wide range of motion
+                    float intensity = clamp(log(1.0 + v_force) / log(50.0), 0.0, 1.0);
                     
                     vec3 color;
                     if (intensity < 0.25) {
-                        // Dark blue to blue
                         float t = intensity / 0.25;
                         color = mix(vec3(0.0, 0.0, 0.1), vec3(0.0, 0.0, 0.5), t);
                     } else if (intensity < 0.5) {
-                        // Blue to cyan
                         float t = (intensity - 0.25) / 0.25;
                         color = mix(vec3(0.0, 0.0, 0.5), vec3(0.0, 0.5, 0.5), t);
                     } else if (intensity < 0.75) {
-                        // Cyan to yellow
                         float t = (intensity - 0.5) / 0.25;
                         color = mix(vec3(0.0, 0.5, 0.5), vec3(0.5, 0.5, 0.0), t);
                     } else {
-                        // Yellow to red
                         float t = (intensity - 0.75) / 0.25;
                         color = mix(vec3(0.5, 0.5, 0.0), vec3(0.8, 0.0, 0.0), t);
                     }
@@ -401,13 +397,14 @@ export class ParticleRenderer {
     drawShapes(shapes) {
         if (!shapes || shapes.length === 0) return;
         
-        const gl = this.gl;
-        
         shapes.forEach(shape => {
             if (shape.type === 'rect') {
                 this.drawRect(shape.x, shape.y, shape.width, shape.height, shape.angle || 0);
             } else if (shape.type === 'circle') {
                 this.drawCircle(shape.x, shape.y, shape.radius, shape.color || '#ffffff');
+                if (shape.moveable && (shape.vx !== undefined || shape.vy !== undefined)) {
+                    this.drawVelocityArrow(shape.x, shape.y, shape.vx || 0, shape.vy || 0, shape.radius);
+                }
             }
         });
     }
@@ -435,7 +432,7 @@ export class ParticleRenderer {
                 out vec4 fragColor;
                 
                 void main() {
-                    fragColor = vec4(u_color, 1.0);
+                    fragColor = vec4(u_color, 0.5);
                 }
             `);
 
@@ -521,7 +518,7 @@ export class ParticleRenderer {
                 out vec4 fragColor;
                 
                 void main() {
-                    fragColor = vec4(0.3, 0.3, 0.4, 1.0);
+                    fragColor = vec4(0.3, 0.3, 0.4, 0.5);
                 }
             `);
 
@@ -632,6 +629,78 @@ export class ParticleRenderer {
         gl.uniform3f(colorLoc, rgb.r, rgb.g, rgb.b);
 
         gl.drawArrays(gl.TRIANGLE_FAN, 0, vertices.length / 2);
+    }
+
+    drawVelocityArrow(x, y, vx, vy, radius) {
+        const speed = Math.sqrt(vx * vx + vy * vy);
+        if (speed < 0.1) return;
+
+        const gl = this.gl;
+        const dpr = window.devicePixelRatio || 1;
+
+        if (!this.arrowProgram) {
+            const vertexShader = this.createShader(gl.VERTEX_SHADER, `#version 300 es
+                precision highp float;
+                in vec2 a_position;
+                uniform vec2 u_resolution;
+                void main() {
+                    vec2 clipSpace = (a_position / u_resolution) * 2.0 - 1.0;
+                    gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+                }
+            `);
+            const fragmentShader = this.createShader(gl.FRAGMENT_SHADER, `#version 300 es
+                precision highp float;
+                out vec4 fragColor;
+                void main() {
+                    fragColor = vec4(1.0, 1.0, 1.0, 0.9);
+                }
+            `);
+            this.arrowProgram = gl.createProgram();
+            gl.attachShader(this.arrowProgram, vertexShader);
+            gl.attachShader(this.arrowProgram, fragmentShader);
+            gl.linkProgram(this.arrowProgram);
+            this.arrowBuffer = gl.createBuffer();
+        }
+
+        gl.useProgram(this.arrowProgram);
+
+        const nx = vx / speed;
+        const ny = vy / speed;
+        const arrowLength = radius * 0.17;
+        const headSize = arrowLength * 0.35;
+
+        // Arrow starts at center, ends inside circle
+        const startX = x * dpr;
+        const startY = y * dpr;
+        const endX = (x + nx * arrowLength) * dpr;
+        const endY = (y + ny * arrowLength) * dpr;
+
+        // Perpendicular for arrowhead
+        const px = -ny;
+        const py = nx;
+
+        const headBaseX = endX - nx * headSize * dpr;
+        const headBaseY = endY - ny * headSize * dpr;
+
+        const vertices = new Float32Array([
+            startX, startY,
+            endX, endY,
+            headBaseX + px * headSize * 0.5 * dpr, headBaseY + py * headSize * 0.5 * dpr,
+            endX, endY,
+            headBaseX - px * headSize * 0.5 * dpr, headBaseY - py * headSize * 0.5 * dpr,
+            endX, endY,
+        ]);
+
+        const posLoc = gl.getAttribLocation(this.arrowProgram, 'a_position');
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.arrowBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.DYNAMIC_DRAW);
+        gl.enableVertexAttribArray(posLoc);
+        gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+        const resLoc = gl.getUniformLocation(this.arrowProgram, 'u_resolution');
+        gl.uniform2f(resLoc, this.canvas.width, this.canvas.height);
+
+        gl.drawArrays(gl.LINES, 0, 6);
     }
 
     resize(width, height) {
