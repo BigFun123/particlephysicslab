@@ -75,8 +75,11 @@ export class UIController {
             }
             const headerEquation = document.getElementById('headerEquation');
             if (firstPreset.equation) {
-                headerEquation.textContent = firstPreset.equation;
+                headerEquation.innerHTML = firstPreset.equation;
                 headerEquation.classList.add('visible');
+                if (window.MathJax) {
+                    MathJax.typesetPromise([headerEquation]).catch(err => console.log(err));
+                }
             }
         }
     }
@@ -105,10 +108,13 @@ export class UIController {
 
         const headerEquation = document.getElementById('headerEquation');
         if (preset.equation) {
-            headerEquation.textContent = preset.equation;
+            headerEquation.innerHTML = preset.equation;
             headerEquation.classList.add('visible');
+            if (window.MathJax) {
+                MathJax.typesetPromise([headerEquation]).catch(err => console.log(err));
+            }
         } else {
-            headerEquation.textContent = '';
+            headerEquation.innerHTML = '';
             headerEquation.classList.remove('visible');
         }
     }

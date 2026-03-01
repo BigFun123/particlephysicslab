@@ -55,11 +55,9 @@ body {
     font-size: 0.8rem;
     color: #b4b4c5;
     margin: 0;
-    line-height: 1.4;
+    line-height: 1.2;
     font-style: italic;
-    opacity: 0;
-    max-height: 0;
-    overflow: hidden;
+    opacity: 0;        
     transition: all 0.3s ease;
 }
 
@@ -71,12 +69,12 @@ body {
 
 .header-equation {
     font-family: 'Courier New', monospace;
-    font-size: 1.1rem;
+    font-size: 1.0rem;
     color: #88aaff;
-    margin: 2px 0 0 0;
+    margin: 1px 0 0 0;
     opacity: 0;
     transition: opacity 0.3s ease;
-    font-style: italic;
+    min-height: 1.0em;
 }
 
 .header-equation.visible {

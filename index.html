@@ -1,20 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Virtual Particle Accelerator</title>
+    <script>
+        MathJax = {
+            tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] },
+            options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'] }
+        };
+    </script>
+    <script src="./mathjax.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <div class="app-container">
         <header class="header">
             <div class="header-left">
                 <h1 class="title">Particle Lab by Karl Lilje</h1>
                 <p class="header-description" id="headerDescription"></p>
-                <p class="header-equation" id="headerEquation"></p>
+                <div class="header-equation" id="headerEquation"></div>
             </div>
+
             <div class="stats">
+
                 <span class="stat-item">
                     <span class="stat-label">Particles:</span>
                     <span class="stat-value" id="particleCount">0</span>
@@ -28,24 +39,23 @@
 
         <div class="content">
             <canvas id="canvas"></canvas>
-            
+
             <div class="control-panel">
                 <div class="control-section">
-                    <h3 class="section-title">Preset Layouts</h3>
+                    <h3 class="section-title">Presets</h3>
                     <!-- Preset buttons will be dynamically inserted here -->
                 </div>
 
                 <div class="control-section">
                     <h3 class="section-title">Simulation Controls</h3>
-                    
+
                     <div class="control-group">
                         <label class="control-label">
                             Particle Count
                             <span class="control-value" id="particleCountValue">10000</span>
                         </label>
-                        <input type="range" id="particleCountSlider" 
-                               min="10" max="200000" step="10" value="1000"
-                               class="slider">
+                        <input type="range" id="particleCountSlider" min="10" max="200000" step="10" value="1000"
+                            class="slider">
                     </div>
 
                     <div class="control-group">
@@ -53,9 +63,7 @@
                             Particle Size
                             <span class="control-value" id="particleSizeValue">2</span>
                         </label>
-                        <input type="range" id="particleSizeSlider" 
-                               min="1" max="5" step="0.5" value="2"
-                               class="slider">
+                        <input type="range" id="particleSizeSlider" min="1" max="5" step="0.5" value="2" class="slider">
                     </div>
 
                     <div class="control-group">
@@ -63,9 +71,7 @@
                             Speed
                             <span class="control-value" id="speedValue">1.0</span>
                         </label>
-                        <input type="range" id="speedSlider" 
-                               min="0.1" max="5" step="0.1" value="1.0"
-                               class="slider">
+                        <input type="range" id="speedSlider" min="0.1" max="5" step="0.1" value="1.0" class="slider">
                     </div>
 
                     <div class="control-group">
@@ -73,9 +79,7 @@
                             Collision Cooling
                             <span class="control-value" id="dampingValue">0.8</span>
                         </label>
-                        <input type="range" id="dampingSlider" 
-                               min="0.0" max="1" step="0.05" value="0.8"
-                               class="slider">
+                        <input type="range" id="dampingSlider" min="0.0" max="1" step="0.05" value="0.8" class="slider">
                     </div>
 
                     <div class="control-group">
@@ -112,4 +116,5 @@
 
     <script type="module" src="main.js"></script>
 </body>
+
 </html>

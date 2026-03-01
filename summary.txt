@@ -1,7 +1,7 @@
 # ParticlePlayground - Application Summary
 
 ## Overview
-ParticlePlayground is an interactive physics simulation application built with Python and Pygame. It provides a real-time particle physics sandbox with various forces, constraints, and interactive features.
+
 
 ## Core Features
 

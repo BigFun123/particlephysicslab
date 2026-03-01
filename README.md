@@ -3,6 +3,8 @@
 
 A high-performance WebGL-based particle physics simulator that demonstrates various physical phenomena through interactive visualizations.
 
+This is based on a lifetime of research and study, especially into gravity and why it works the way it does.
+
 ## Overview
 
 Particle Playground simulates tens of thousands of particles in real-time, with collision detection, dynamic shapes, and sensor observations. Built with WebGL 2.0 for maximum performance, it can handle up to 100,000+ particles at 60 FPS.
