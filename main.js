@@ -30,6 +30,10 @@ class ParticleAccelerator {
         try {
             // Load presets first
             await this.presetLoader.loadPresets();
+            
+            // Set screen size for preset scaling
+            const rect = this.canvas.getBoundingClientRect();
+            this.presetLoader.setScreenSize(rect.width, rect.height);
 
             this.renderer = new ParticleRenderer(this.canvas);
             await this.renderer.init();
@@ -152,6 +156,11 @@ class ParticleAccelerator {
         this.canvas.style.width = rect.width + 'px';
         this.canvas.style.height = rect.height + 'px';
         
+        // Update preset loader screen size
+        if (this.presetLoader) {
+            this.presetLoader.setScreenSize(rect.width, rect.height);
+        }
+        
         if (this.renderer) {
             this.renderer.resize(this.canvas.width, this.canvas.height);
         }
@@ -220,6 +229,11 @@ class ParticleAccelerator {
     loadPreset(presetNameOrIndex) {
         let preset;
         
+        const rect = this.canvas.getBoundingClientRect();
+        
+        // Update screen size before getting preset
+        this.presetLoader.setScreenSize(rect.width, rect.height);
+        
         if (typeof presetNameOrIndex === 'string') {
             preset = this.presetLoader.getPresetByName(presetNameOrIndex);
         } else {
@@ -231,7 +245,6 @@ class ParticleAccelerator {
             return;
         }
 
-        const rect = this.canvas.getBoundingClientRect();
         this.simulation = new ParticleSimulation(preset.particles);
         this.simulation.bounds.width = rect.width;
         this.simulation.bounds.height = rect.height;
@@ -250,24 +263,11 @@ class ParticleAccelerator {
         // Set wrap edges BEFORE setEmitter and init
         this.simulation.wrapEdges = preset.wrapEdges || false;
         
-        // Set emitter if present and adjust position if needed
+        // Set emitter if present (position already scaled by preset loader)
         if (preset.emitter) {
-            const emitter = {...preset.emitter};
-            if (emitter.x === -1) emitter.x = rect.width / 2;
-            if (emitter.y === -1) emitter.y = rect.height / 2;
-            this.simulation.setEmitter(emitter);
+            this.simulation.setEmitter({...preset.emitter});
         } else {
             this.simulation.setEmitter(null);
-        }
-        
-        // Adjust sensor position if needed
-        if (this.simulation.sensor) {
-            if (this.simulation.sensor.x === -1) {
-                this.simulation.sensor.x = (rect.width - this.simulation.sensor.width) / 2;
-            }
-            if (this.simulation.sensor.y === -1) {
-                this.simulation.sensor.y = (rect.height - this.simulation.sensor.height) / 2;
-            }
         }
         
         this.simulation.init(preset.initType || 'center');
