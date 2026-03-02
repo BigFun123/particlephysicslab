@@ -366,11 +366,25 @@
 
     // MathJax-compatible API
     window.MathJax = {
+        startup: {
+            defaultPageReady: function() {
+                return new Promise((resolve) => {
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', () => {
+                            typesetPage();
+                            resolve();
+                        });
+                    } else {
+                        typesetPage();
+                        resolve();
+                    }
+                });
+            }
+        },
         typesetPromise: function (elements) {
             return new Promise((resolve) => {
                 (elements || [document.body]).forEach(el => {
                     if (!el) return;
-                    // Find all elements with $$ ... $$ text or innerHTML
                     processElement(el);
                 });
                 resolve();
@@ -383,27 +397,75 @@
         }
     };
 
+    function typesetPage() {
+        processElement(document.body);
+    }
+
     function processElement(el) {
-        // If element directly contains LaTeX (set via innerHTML with $$)
-        const raw = el.innerHTML || '';
-        if (raw.includes('$$')) {
-            el.innerHTML = raw.replace(/\$\$([\s\S]*?)\$\$/g, (match, latex) => {
-                return renderLatex('$$' + latex + '$$');
-            });
-            return;
+        // Walk through all text nodes
+        const walker = document.createTreeWalker(
+            el,
+            NodeFilter.SHOW_TEXT,
+            null,
+            false
+        );
+
+        const nodesToReplace = [];
+        let node;
+        while (node = walker.nextNode()) {
+            const text = node.textContent;
+            if (text.includes('$$') || text.includes('\\(') || text.includes('\\[')) {
+                nodesToReplace.push(node);
+            }
         }
-        // If element text content looks like LaTeX already rendered as $$...$$
-        const text = el.textContent || '';
-        if (text.includes('$$')) {
-            el.innerHTML = text.replace(/\$\$([\s\S]*?)\$\$/g, (match, latex) => {
-                return renderLatex('$$' + latex + '$$');
+
+        nodesToReplace.forEach(node => {
+            const text = node.textContent;
+            
+            // Process display math $$...$$
+            let processed = text.replace(/\$\$([\s\S]*?)\$\$/g, (match, latex) => {
+                return `<span class="math-display">${renderLatex('$$' + latex + '$$')}</span>`;
             });
-        }
+
+            // Process inline math \(...\)
+            processed = processed.replace(/\\\(([\s\S]*?)\\\)/g, (match, latex) => {
+                return `<span class="math-inline">${renderLatexInline(latex)}</span>`;
+            });
+
+            // Process display math \[...\]
+            processed = processed.replace(/\\\[([\s\S]*?)\\\]/g, (match, latex) => {
+                return `<span class="math-display">${renderLatex('$$' + latex + '$$')}</span>`;
+            });
+
+            if (processed !== text) {
+                const span = document.createElement('span');
+                span.innerHTML = processed;
+                node.parentNode.replaceChild(span, node);
+            }
+        });
+    }
+
+    function renderLatexInline(latex) {
+        const stripped = latex.trim();
+        if (!stripped) return '';
+
+        const tokens = tokenize(stripped);
+        const [nodes] = parseGroup(tokens, 0);
+        const html = nodes.map(renderNode).join('');
+        return `<span class="minijax-inline">${html}</span>`;
     }
 
     // Inject styles
     function injectStyles() {
         const css = `
+.math-display {
+    display: block;
+    text-align: center;
+    margin: 1.2em 0;
+}
+.math-inline {
+    display: inline;
+}
 .minijax-display {
     display: inline-flex;
     align-items: center;
@@ -412,8 +474,19 @@
     font-family: 'Georgia', 'Times New Roman', serif;
     font-size: 1.05em;
     line-height: 1.6;
-    color: #88aaff;
+    color: inherit;
     vertical-align: middle;
+}
+.minijax-inline {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.05em;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 1em;
+    line-height: 1.4;
+    color: inherit;
+    vertical-align: baseline;
 }
 .mj-var { font-style: italic; }
 .mj-num { font-style: normal; }
@@ -466,8 +539,12 @@
     }
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', injectStyles);
+        document.addEventListener('DOMContentLoaded', () => {
+            injectStyles();
+            typesetPage();
+        });
     } else {
         injectStyles();
+        typesetPage();
     }
 })();
