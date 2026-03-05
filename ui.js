@@ -51,6 +51,11 @@ export class UIController {
                 this.currentPresetIndex = index;
                 this.app.loadPreset(index);
                 this.showPresetDescription(preset, button);
+                
+                // Close mobile menu after selection
+                if (this.handlePresetClick) {
+                    this.handlePresetClick();
+                }
             });
             
             buttonContainer.appendChild(button);
@@ -120,6 +125,38 @@ export class UIController {
     }
 
     setupEventListeners() {
+        // Mobile menu toggle
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const controlPanel = document.querySelector('.control-panel');
+        
+        if (mobileMenuToggle && controlPanel) {
+            mobileMenuToggle.addEventListener('click', () => {
+                controlPanel.classList.toggle('open');
+                mobileMenuToggle.textContent = controlPanel.classList.contains('open') ? '✕' : '☰';
+            });
+
+            // Close menu when clicking on the drag handle area
+            controlPanel.addEventListener('click', (e) => {
+                if (e.target === controlPanel && window.innerWidth <= 768) {
+                    controlPanel.classList.remove('open');
+                    mobileMenuToggle.textContent = '☰';
+                }
+            });
+
+            // Close menu when a preset is selected on mobile
+            const handlePresetClick = () => {
+                if (window.innerWidth <= 768) {
+                    setTimeout(() => {
+                        controlPanel.classList.remove('open');
+                        mobileMenuToggle.textContent = '☰';
+                    }, 300);
+                }
+            };
+
+            // Add this handler to preset buttons after they're created
+            this.handlePresetClick = handlePresetClick;
+        }
+
         // Particle count slider
         const particleCountSlider = document.getElementById('particleCountSlider');
         const particleCountValue = document.getElementById('particleCountValue');
