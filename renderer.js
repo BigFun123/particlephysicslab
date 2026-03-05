@@ -406,6 +406,11 @@ export class ParticleRenderer {
                     this.drawVelocityArrow(shape.x, shape.y, shape.vx || 0, shape.vy || 0, shape.radius);
                 }
             }
+            
+            // Draw label if it exists
+            if (shape.label) {
+                this.drawLabel(shape.x, shape.y-20, shape.label);
+            }
         });
     }
 
@@ -701,6 +706,125 @@ export class ParticleRenderer {
         gl.uniform2f(resLoc, this.canvas.width, this.canvas.height);
 
         gl.drawArrays(gl.LINES, 0, 6);
+    }
+
+    drawLabel(x, y, text) {
+        // Create a 2D context for text rendering if not exists
+        if (!this.labelCanvas) {
+            this.labelCanvas = document.createElement('canvas');
+            this.labelCtx = this.labelCanvas.getContext('2d');
+        }
+
+        // Get the main canvas 2D context for drawing text
+        const mainCanvas = this.canvas;
+        const tempCanvas = document.createElement('canvas');
+        const ctx = tempCanvas.getContext('2d');
+        
+        // Set canvas size to match main canvas
+        tempCanvas.width = mainCanvas.width;
+        tempCanvas.height = mainCanvas.height;
+        
+        // Configure text style
+        const dpr = window.devicePixelRatio || 1;
+        const fontSize = 12 * dpr;
+        ctx.font = `${fontSize}px Arial`;
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+        ctx.shadowBlur = 4 * dpr;
+        
+        // Draw text at shape position
+        ctx.fillText(text, x * dpr, y * dpr);
+        
+        // Draw the text canvas onto the WebGL canvas
+        const gl = this.gl;
+        
+        // Create texture program if not exists
+        if (!this.textureProgram) {
+            const vertexShader = this.createShader(gl.VERTEX_SHADER, `#version 300 es
+                precision highp float;
+                in vec2 a_position;
+                in vec2 a_texCoord;
+                uniform vec2 u_resolution;
+                out vec2 v_texCoord;
+                
+                void main() {
+                    vec2 clipSpace = (a_position / u_resolution) * 2.0 - 1.0;
+                    gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+                    v_texCoord = a_texCoord;
+                }
+            `);
+            
+            const fragmentShader = this.createShader(gl.FRAGMENT_SHADER, `#version 300 es
+                precision highp float;
+                in vec2 v_texCoord;
+                uniform sampler2D u_texture;
+                out vec4 fragColor;
+                
+                void main() {
+                    fragColor = texture(u_texture, v_texCoord);
+                }
+            `);
+            
+            this.textureProgram = gl.createProgram();
+            gl.attachShader(this.textureProgram, vertexShader);
+            gl.attachShader(this.textureProgram, fragmentShader);
+            gl.linkProgram(this.textureProgram);
+            
+            this.textureBuffer = gl.createBuffer();
+            this.texCoordBuffer = gl.createBuffer();
+            this.labelTexture = gl.createTexture();
+        }
+        
+        gl.useProgram(this.textureProgram);
+        
+        // Upload texture
+        gl.bindTexture(gl.TEXTURE_2D, this.labelTexture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, tempCanvas);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        
+        // Full screen quad
+        const vertices = new Float32Array([
+            0, 0,
+            mainCanvas.width, 0,
+            0, mainCanvas.height,
+            0, mainCanvas.height,
+            mainCanvas.width, 0,
+            mainCanvas.width, mainCanvas.height
+        ]);
+        
+        const texCoords = new Float32Array([
+            0, 0,
+            1, 0,
+            0, 1,
+            0, 1,
+            1, 0,
+            1, 1
+        ]);
+        
+        const posLoc = gl.getAttribLocation(this.textureProgram, 'a_position');
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.textureBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(posLoc);
+        gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+        
+        const texCoordLoc = gl.getAttribLocation(this.textureProgram, 'a_texCoord');
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.texCoordBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, texCoords, gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(texCoordLoc);
+        gl.vertexAttribPointer(texCoordLoc, 2, gl.FLOAT, false, 0, 0);
+        
+        const resLoc = gl.getUniformLocation(this.textureProgram, 'u_resolution');
+        gl.uniform2f(resLoc, mainCanvas.width, mainCanvas.height);
+        
+        const texLoc = gl.getUniformLocation(this.textureProgram, 'u_texture');
+        gl.uniform1i(texLoc, 0);
+        
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
 
     resize(width, height) {
