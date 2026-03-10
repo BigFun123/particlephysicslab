@@ -130,29 +130,31 @@ export class ParticleRenderer {
 
         return program;
     }
+render(positions, velocities, shapes = [], sensors = [], sensorHits = [], forceField = null, forceFieldWidth = 0, forceFieldHeight = 0, forceFieldResolution = 20, emitter = null) {
+    const gl = this.gl;
 
-    render(positions, velocities, shapes = [], sensor = null, sensorHits = null, forceField = null, forceFieldWidth = 0, forceFieldHeight = 0, forceFieldResolution = 20, emitter = null) {
-        const gl = this.gl;
-
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        
-        // Draw force field first (as backdrop)
-        if (forceField && forceField.length > 0) {
-            this.drawForceField(forceField, forceFieldWidth, forceFieldHeight, forceFieldResolution);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    
+    // Draw force field first (as backdrop)
+    if (forceField && forceField.length > 0) {
+        this.drawForceField(forceField, forceFieldWidth, forceFieldHeight, forceFieldResolution);
+    }
+    
+    // Draw emitter
+    if (emitter) {
+        this.drawEmitter(emitter);
+    }
+    
+    // Draw shapes
+    this.drawShapes(shapes);
+    
+    // Draw sensors with hit visualization
+    if (sensors && sensors.length > 0 && sensorHits && sensorHits.length > 0) {
+        for (let i = 0; i < sensors.length; i++) {
+            this.drawSensor(sensors[i], sensorHits[i]);
         }
-        
-        // Draw emitter
-        if (emitter) {
-            this.drawEmitter(emitter);
-        }
-        
-        // Draw shapes
-        this.drawShapes(shapes);
-        
-        // Draw sensor with hit visualization
-        if (sensor && sensorHits) {
-            this.drawSensor(sensor, sensorHits);
-        }
+    }
+    
         
         // Then draw particles
         gl.useProgram(this.program);
@@ -323,11 +325,13 @@ export class ParticleRenderer {
                     intensity = pow(intensity, 0.7); // Gamma correction for brighter appearance
                     
                     vec3 color = mix(
-                        vec3(0.2, 0.3, 0.5),  // Brighter blue base
+                        vec3(0.3, 0.5, 0.7),  // Visible blue base even with no hits
                         vec3(1.5, 2.0, 2.0),  // Very bright cyan/white (values > 1.0 for bloom effect)
                         intensity
                     );
-                    fragColor = vec4(color, 0.9);
+                    // Always visible with minimum alpha of 0.3
+                    float alpha = mix(0.3, 0.9, intensity);
+                    fragColor = vec4(color, alpha);
                 }
             `);
 

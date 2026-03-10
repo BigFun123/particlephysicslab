@@ -16,11 +16,11 @@ export class ParticleSimulation {
         this.shapes = [];
         this.initialShapeStates = []; // Store initial states
         this.time = 0;
-        
-        // Sensor for particle detection
-        this.sensor = null;
-        this.sensorHits = null; // 2D array tracking hit intensity
+        // Sensors for particle detection (support single or multiple)
+        this.sensors = [];
+        this.sensorHits = []; // Array of 2D arrays tracking hit intensity for each sensor
         this.sensorResolution = 1; // Pixels per hit cell
+        
         
         // Force field visualization
         this.showForceField = false;
@@ -42,7 +42,7 @@ export class ParticleSimulation {
     init(initType = 'center') {
         // If emitter is managing particles, skip re-allocating particle arrays
         if (this.emitter && this.emitter.maxParticles && this.positions) {
-            if (this.sensor) this.initSensor();
+            if (this.sensors.length > 0) this.initSensors();
             this.initCirclePhysics();
             this.initForceField();
             return;
@@ -61,8 +61,8 @@ export class ParticleSimulation {
             this.initStatic();
         }
         
-        if (this.sensor) {
-            this.initSensor();
+        if (this.sensors.length > 0) {
+            this.initSensors();
         }
         
         this.initCirclePhysics();
@@ -82,14 +82,19 @@ export class ParticleSimulation {
         });
     }
 
-    initSensor() {
-        if (!this.sensor) return;
+    initSensors() {
+        if (this.sensors.length === 0) return;
         
-        const width = Math.ceil(this.sensor.width / this.sensorResolution);
-        const height = Math.ceil(this.sensor.height / this.sensorResolution);
-        
-        this.sensorHits = new Float32Array(width * height);
-        this.sensorHits.fill(0);
+        this.sensorHits = [];
+        for (let i = 0; i < this.sensors.length; i++) {
+            const sensor = this.sensors[i];
+            const width = Math.ceil(sensor.width / this.sensorResolution);
+            const height = Math.ceil(sensor.height / this.sensorResolution);
+            
+            const hits = new Float32Array(width * height);
+            hits.fill(0);
+            this.sensorHits.push(hits);
+        }
     }
 
     initForceField() {
@@ -265,9 +270,11 @@ export class ParticleSimulation {
             this.updateForceField();
         }
 
-        if (this.sensorHits) {
-            for (let i = 0; i < this.sensorHits.length; i++) {
-                this.sensorHits[i] *= 0.99;
+        if (this.sensorHits.length > 0) {
+            for (let s = 0; s < this.sensorHits.length; s++) {
+                for (let i = 0; i < this.sensorHits[s].length; i++) {
+                    this.sensorHits[s][i] *= 0.995; // Slower decay for better visibility
+                }
             }
         }
 
@@ -288,8 +295,8 @@ export class ParticleSimulation {
             this.positions[idx] += this.velocities[idx] * dt;
             this.positions[idx + 1] += this.velocities[idx + 1] * dt;
 
-            if (this.sensor) {
-                this.checkSensorHit(oldX, oldY, this.positions[idx], this.positions[idx + 1]);
+            if (this.sensors.length > 0) {
+                this.checkSensorHits(oldX, oldY, this.positions[idx], this.positions[idx + 1]);
             }
 
             if (wrap) {
@@ -514,15 +521,25 @@ export class ParticleSimulation {
     handleStaticRectCollision(idx, shape, x, y, r) {
         const {x: rx, y: ry, width: rw, height: rh} = shape;
 
+        // Current position
+        const cx = this.positions[idx];
+        const cy = this.positions[idx + 1];
+
+        // Check if shape has acceleration property - if so, only accelerate, don't collide
+        if (shape.accelerate) {
+            if (cx >= rx && cx <= rx + rw && cy >= ry && cy <= ry + rh) {
+                // Particle is inside accelerator - apply acceleration vector
+                this.velocities[idx] += shape.accelerate.x;
+                this.velocities[idx + 1] += shape.accelerate.y;
+            }
+            return; // Skip all collision handling for accelerator shapes
+        }
+
         // Expand rectangle by particle radius for swept test
         const ex = rx - r;
         const ey = ry - r;
         const ew = rw + r * 2;
         const eh = rh + r * 2;
-
-        // Current position
-        const cx = this.positions[idx];
-        const cy = this.positions[idx + 1];
 
         // Find closest point on expanded rectangle to particle
         const closestX = Math.max(ex, Math.min(cx, ex + ew));
@@ -685,6 +702,17 @@ export class ParticleSimulation {
         const dx = x - cx;
         const dy = y - cy;
         const distSq = dx * dx + dy * dy;
+
+        // Check if shape has acceleration property - if so, only accelerate, don't collide
+        if (shape.accelerate) {
+            if (distSq < radius * radius) {
+                // Particle is inside accelerator - apply acceleration vector
+                this.velocities[idx] += shape.accelerate.x;
+                this.velocities[idx + 1] += shape.accelerate.y;
+            }
+            return; // Skip all collision handling for accelerator shapes
+        }
+
         const combinedRadius = r + radius;
         const combinedRadiusSq = combinedRadius * combinedRadius;
 
@@ -827,25 +855,28 @@ export class ParticleSimulation {
         }
     }
 
-    checkSensorHit(x1, y1, x2, y2) {
-        const sensor = this.sensor;
-        
-        // Check if line segment crosses sensor bounds
-        if (this.lineIntersectsRect(x1, y1, x2, y2, sensor.x, sensor.y, sensor.width, sensor.height)) {
-            // Calculate which cell was hit
-            const hitX = (x2 + x1) / 2;
-            const hitY = (y2 + y1) / 2;
+    checkSensorHits(x1, y1, x2, y2) {
+        for (let s = 0; s < this.sensors.length; s++) {
+            const sensor = this.sensors[s];
+            const sensorHits = this.sensorHits[s];
             
-            if (hitX >= sensor.x && hitX < sensor.x + sensor.width &&
-                hitY >= sensor.y && hitY < sensor.y + sensor.height) {
+            // Check if line segment crosses sensor bounds
+            if (this.lineIntersectsRect(x1, y1, x2, y2, sensor.x, sensor.y, sensor.width, sensor.height)) {
+                // Calculate which cell was hit
+                const hitX = (x2 + x1) / 2;
+                const hitY = (y2 + y1) / 2;
                 
-                const cellX = Math.floor((hitX - sensor.x) / this.sensorResolution);
-                const cellY = Math.floor((hitY - sensor.y) / this.sensorResolution);
-                const width = Math.ceil(sensor.width / this.sensorResolution);
-                const index = cellY * width + cellX;
-                
-                if (index >= 0 && index < this.sensorHits.length) {
-                    this.sensorHits[index] = Math.min(this.sensorHits[index] + 1.0, 20); // Increased from 0.5 to 1.0, max from 10 to 20
+                if (hitX >= sensor.x && hitX < sensor.x + sensor.width &&
+                    hitY >= sensor.y && hitY < sensor.y + sensor.height) {
+                    
+                    const cellX = Math.floor((hitX - sensor.x) / this.sensorResolution);
+                    const cellY = Math.floor((hitY - sensor.y) / this.sensorResolution);
+                    const width = Math.ceil(sensor.width / this.sensorResolution);
+                    const index = cellY * width + cellX;
+                    
+                    if (index >= 0 && index < sensorHits.length) {
+                        sensorHits[index] = Math.min(sensorHits[index] + 1.0, 20);
+                    }
                 }
             }
         }
@@ -1043,17 +1074,36 @@ export class ParticleSimulation {
     emitParticle(index) {
         const idx = index * 2;
         
-        // Random angle for emission
-        const angle = Math.random() * Math.PI * 2;
-        
-        // Position at emitter location with small random offset
-        const offsetRadius = Math.random() * this.emitter.radius * 0.5;
-        this.positions[idx] = this.emitter.x + Math.cos(angle) * offsetRadius;
-        this.positions[idx + 1] = this.emitter.y + Math.sin(angle) * offsetRadius;
-        
-        // Velocity in random direction
-        const speed = this.emitter.particleSpeed * (0.8 + Math.random() * 0.4);
-        this.velocities[idx] = Math.cos(angle) * speed;
-        this.velocities[idx + 1] = Math.sin(angle) * speed;
+        // Check if emitter has a direction vector
+        if (this.emitter.direction) {
+            // Emit in specified direction with small random spread
+            const baseAngle = Math.atan2(this.emitter.direction.y, this.emitter.direction.x);
+            const spread = this.emitter.spread || 0.2; // Default spread of 0.2 radians (~11 degrees)
+            const angle = baseAngle + (Math.random() - 0.5) * spread;
+            
+            // Position at emitter location with small random offset
+            const offsetRadius = Math.random() * this.emitter.radius * 0.5;
+            const offsetAngle = Math.random() * Math.PI * 2;
+            this.positions[idx] = this.emitter.x + Math.cos(offsetAngle) * offsetRadius;
+            this.positions[idx + 1] = this.emitter.y + Math.sin(offsetAngle) * offsetRadius;
+            
+            // Velocity in specified direction with speed variation
+            const speed = this.emitter.particleSpeed * (0.8 + Math.random() * 0.4);
+            this.velocities[idx] = Math.cos(angle) * speed;
+            this.velocities[idx + 1] = Math.sin(angle) * speed;
+        } else {
+            // Random angle for emission (original behavior)
+            const angle = Math.random() * Math.PI * 2;
+            
+            // Position at emitter location with small random offset
+            const offsetRadius = Math.random() * this.emitter.radius * 0.5;
+            this.positions[idx] = this.emitter.x + Math.cos(angle) * offsetRadius;
+            this.positions[idx + 1] = this.emitter.y + Math.sin(angle) * offsetRadius;
+            
+            // Velocity in random direction
+            const speed = this.emitter.particleSpeed * (0.8 + Math.random() * 0.4);
+            this.velocities[idx] = Math.cos(angle) * speed;
+            this.velocities[idx + 1] = Math.sin(angle) * speed;
+        }
     }
 }

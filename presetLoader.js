@@ -142,8 +142,7 @@ export class PresetLoader {
                 return scaledShape;
             });
         }
-        
-        // Scale sensor
+        // Scale sensor (support both single sensor and array of sensors)
         if (scaledPreset.sensor) {
             scaledPreset.sensor = { ...scaledPreset.sensor };
             
@@ -163,6 +162,32 @@ export class PresetLoader {
             scaledPreset.sensor.width = scaledPreset.sensor.width * scale;
             scaledPreset.sensor.height = scaledPreset.sensor.height * scale;
         }
+        
+        // Scale sensors array
+        if (scaledPreset.sensors && Array.isArray(scaledPreset.sensors)) {
+            scaledPreset.sensors = scaledPreset.sensors.map(sensor => {
+                const scaledSensor = { ...sensor };
+                
+                // Handle -1 values (center positioning)
+                if (scaledSensor.x === -1) {
+                    scaledSensor.x = (screenWidth - scaledSensor.width * scale) / 2;
+                } else {
+                    scaledSensor.x = scaledSensor.x * scale + offsetX;
+                }
+                
+                if (scaledSensor.y === -1) {
+                    scaledSensor.y = (screenHeight - scaledSensor.height * scale) / 2;
+                } else {
+                    scaledSensor.y = scaledSensor.y * scale + offsetY;
+                }
+                
+                scaledSensor.width = scaledSensor.width * scale;
+                scaledSensor.height = scaledSensor.height * scale;
+                
+                return scaledSensor;
+            });
+        }
+        
         
         // Scale emitter
         if (scaledPreset.emitter) {

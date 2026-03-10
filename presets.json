@@ -9,7 +9,8 @@
         "damping": 0.99,
         "showForceField": true,
         "wrapEdges": true,
-        "shapes": []
+        "shapes": [],
+        "glowIntensity": 12.0
     },
     {
         "name": "Entropy",
@@ -20,7 +21,8 @@
         "speed": 1.5,
         "damping": 1.00,
         "wrapEdges": true,
-        "shapes": []
+        "shapes": [],
+        "glowIntensity": 6.0
     },
     {
         "name": "Quantum Condensation",
@@ -30,7 +32,8 @@
         "initType": "random",
         "damping": 0.25,
         "wrapEdges": true,
-        "shapes": []
+        "shapes": [],
+        "glowIntensity": 3.0
     },
     {
         "name": "Flame Simulation",
@@ -522,6 +525,337 @@
                 "color": "#4166F5",
                 "label": "Neptune"
             }
+        ]
+    },
+    {
+        "name": "Particle Accelerator",
+        "equation": "$$E_k = \\frac{1}{2}mv^2 \\qquad \\mathbf{F} = q(\\mathbf{E} + \\mathbf{v} \\times \\mathbf{B})$$",
+        "description": "A circular particle accelerator that accelerates particles through electromagnetic fields. Particles gain energy as they pass through accelerator sections (rectangles) arranged in a ring pattern. Watch as particles spiral outward gaining speed, simulating a synchrotron or cyclotron.",
+        "particles": 5000,
+        "initType": "center",
+        "speed": 0.5,
+        "particleSize": 2.5,
+        "damping": 0.995,
+        "wrapEdges": true,
+        "showForceField": false,
+        "shapes": [
+            {
+                "type": "rect",
+                "x": 550,
+                "y": 200,
+                "width": 100,
+                "height": 20,
+                "accelerate": { "x": 2.0, "y": 0 },
+                "color": "#ff3333",
+                "label": "1"
+            },
+            {
+                "type": "rect",
+                "x": 700,
+                "y": 200,
+                "width": 100,
+                "height": 20,
+                "accelerate": { "x": 2.0, "y": 0 },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 850,
+                "y": 200,
+                "width": 100,
+                "height": 20,
+                "accelerate": { "x": 2.0, "y": 0 },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 1000,
+                "y": 200,
+                "width": 100,
+                "height": 20,
+                "accelerate": { "x": 2.0, "y": 0 },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 1150,
+                "y": 200,
+                "width": 100,
+                "height": 20,
+                "accelerate": { "x": 2.0, "y": 0 },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 550,
+                "y": 770,
+                "width": 100,
+                "height": 20,
+                "accelerate": { "x": -2.0, "y": 0 },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 700,
+                "y": 770,
+                "width": 100,
+                "height": 20,
+                "accelerate": { "x": -2.0, "y": 0 },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 850,
+                "y": 770,
+                "width": 100,
+                "height": 20,
+                "accelerate": { "x": -2.0, "y": 0 },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 1000,
+                "y": 770,
+                "width": 100,
+                "height": 20,
+                "accelerate": { "x": -2.0, "y": 0 },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 1150,
+                "y": 770,
+                "width": 100,
+                "height": 20,
+                "accelerate": { "x": -2.0, "y": 0 },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 550,
+                "y": 240,
+                "width": 20,
+                "height": 90,
+                "accelerate": { "x": 0.0, "y": -2.0 },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 550,
+                "y": 370,
+                "width": 20,
+                "height": 90,
+                "accelerate": { "x": 0.0, "y": -2.0 },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 550,
+                "y": 500,
+                "width": 20,
+                "height": 90,
+                "accelerate": { "x": 0.0, "y": -2.0 },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 550,
+                "y": 630,
+                "width": 20,
+                "height": 120,
+                "accelerate": { "x": 0.0, "y": -2.0 },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 1230,
+                "y": 240,
+                "width": 20,
+                "height": 90,
+                "accelerate": { "x": 0.0, "y": 2.0 },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 1230,
+                "y": 370,
+                "width": 20,
+                "height": 90,
+                "accelerate": { "x": 0.0, "y": 2.0 },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 1230,
+                "y": 500,
+                "width": 20,
+                "height": 90,
+                "accelerate": { "x": 0.0, "y": 2.0 },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 1230,
+                "y": 630,
+                "width": 20,
+                "height": 90,
+                "accelerate": { "x": 0.0, "y": 2.0 },
+                "color": "#ff3333"
+            }
+        ]
+    },
+    {
+        "name": "Linear Accelerator",
+        "equation": "$$\\Delta E = q \\int \\mathbf{E} \\cdot d\\mathbf{l}$$",
+        "description": "A linear particle accelerator (LINAC) that accelerates particles in a straight line through a series of accelerating cavities. Particles gain energy at each stage, reaching higher velocities as they progress through the accelerator.",
+        "particles": 0,
+        "initType": "emitter",
+        "speed": 1.0,
+        "particleSize": 3.0,
+        "damping": 0.99,
+        "wrapEdges": true,
+        "showForceField": true,
+        "emitter": {
+            "x": 50,
+            "y": 400,
+            "radius": 15,
+            "particlesPerSecond": 10,
+            "maxParticles": 200,
+            "particleSpeed": 50,
+            "direction": {
+                "x": 1,
+                "y": 0
+            },
+            "spread": 0.1,
+            "color": "#00ff88"
+        },
+        "shapes": [
+            {
+                "type": "rect",
+                "x": 150,
+                "y": 350,
+                "width": 80,
+                "height": 100,
+                "accelerate": {
+                    "x": 5.0,
+                    "y": 0
+                },                
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 300,
+                "y": 350,
+                "width": 80,
+                "height": 100,
+                "accelerate": {
+                    "x": 8.0,
+                    "y": 0
+                },
+                "color": "#ff5533"
+            },
+            {
+                "type": "rect",
+                "x": 450,
+                "y": 350,
+                "width": 80,
+                "height": 100,
+                "accelerate": {
+                    "x": 12.0,
+                    "y": 0
+                },
+                "color": "#ff7733"
+            },
+            {
+                "type": "rect",
+                "x": 600,
+                "y": 350,
+                "width": 80,
+                "height": 100,
+                "accelerate": {
+                    "x": 15.0,
+                    "y": 0
+                },
+                "color": "#ff9933"
+            },
+            {
+                "type": "rect",
+                "x": 750,
+                "y": 350,
+                "width": 80,
+                "height": 100,
+                "accelerate": {
+                    "x": 20.0,
+                    "y": 0
+                },
+                "color": "#ffbb33"
+            },
+            {
+                "type": "rect",
+                "x": 900,
+                "y": 350,
+                "width": 80,
+                "height": 100,
+                "accelerate": {
+                    "x": 25.0,
+                    "y": 0
+                },
+                "color": "#ffdd33"
+            },
+            {
+                "type": "rect",
+                "x": 1050,
+                "y": 350,
+                "width": 80,
+                "height": 100,
+                "accelerate": {
+                    "x": 30.0,
+                    "y": 0
+                },
+                "color": "#ffff33"
+            },
+            {
+                "type": "rect",
+                "x": 1200,
+                "y": 300,
+                "width": 200,
+                "height": 200,
+                "accelerate": {
+                    "x": 30.0,
+                    "y": 0
+                },
+                "color": "#333333"
+            }
+        ],
+        "sensors": [
+            {
+                "type": "rect",
+                "x": 750,
+                "y": 350,
+                "width": 10,
+                "height": 100
+            },
+            {
+                "type": "rect",
+                "x": 1200,
+                "y": 50,
+                "width": 10,
+                "height": 700
+            },
+            {
+                "type": "rect",
+                "x": 1300,
+                "y": 50,
+                "width": 70,
+                "height": 700
+            },
+            {
+                "type": "rect",
+                "x": 1400,
+                "y": 50,
+                "width": 70,
+                "height": 700
+            }   
         ]
     }
 ]

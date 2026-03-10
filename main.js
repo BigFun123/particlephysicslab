@@ -47,7 +47,8 @@ class ParticleAccelerator {
                 this.simulation.bounds.width = rect.width;
                 this.simulation.bounds.height = rect.height;
                 this.simulation.shapes = firstPreset.shapes || [];
-                this.simulation.sensor = firstPreset.sensor || null;
+                // Support both single sensor and sensors array
+                this.simulation.sensors = firstPreset.sensors || (firstPreset.sensor ? [firstPreset.sensor] : []);
                 
                 // Set emitter if present - handle centering
                 if (firstPreset.emitter) {
@@ -198,10 +199,10 @@ class ParticleAccelerator {
         }
         
         this.renderer.render(
-            this.simulation.positions, 
-            this.simulation.velocities, 
+            this.simulation.positions,
+            this.simulation.velocities,
             this.simulation.shapes,
-            this.simulation.sensor,
+            this.simulation.sensors,
             this.simulation.sensorHits,
             this.simulation.forceField,
             this.simulation.forceFieldWidth,
@@ -257,8 +258,9 @@ class ParticleAccelerator {
                 this.simulation.addShape({...shape}); // Clone to avoid reference issues
             });
         }
+        // Support both single sensor and sensors array
+        this.simulation.sensors = preset.sensors || (preset.sensor ? [preset.sensor] : []);
         
-        this.simulation.sensor = preset.sensor || null;
         
         // Set wrap edges BEFORE setEmitter and init
         this.simulation.wrapEdges = preset.wrapEdges || false;
@@ -467,9 +469,9 @@ presets.forEach((preset, index) => {
                 simulation.addShape({...shape}); // Clone to avoid reference issues
             });
         }
+        // Setup sensors (support both single sensor and sensors array)
+        simulation.sensors = preset.sensors || (preset.sensor ? [preset.sensor] : []);
         
-        // Setup sensor
-        simulation.sensor = preset.sensor || null;
         
         // Update header description
         headerDescription.textContent = preset.description || '';
