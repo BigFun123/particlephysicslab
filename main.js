@@ -70,6 +70,11 @@ class ParticleAccelerator {
                 // Set wrap edges from preset
                 this.simulation.wrapEdges = firstPreset.wrapEdges || false;
                 
+                // Set liquid configuration from preset
+                if (firstPreset.liquid) {
+                    this.simulation.liquidConfig = firstPreset.liquid;
+                }
+                
                 this.simulation.init(firstPreset.initType || 'center');
                 
                 // Set renderer properties from preset
@@ -264,6 +269,13 @@ class ParticleAccelerator {
         
         // Set wrap edges BEFORE setEmitter and init
         this.simulation.wrapEdges = preset.wrapEdges || false;
+        
+        // Set liquid configuration from preset
+        if (preset.liquid) {
+            this.simulation.liquidConfig = preset.liquid;
+        } else {
+            this.simulation.liquidConfig = null;
+        }
         
         // Set emitter if present (position already scaled by preset loader)
         if (preset.emitter) {

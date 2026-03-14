@@ -259,7 +259,14 @@ export class UIController {
         this.app.simulation.bounds.width = rect.width;
         this.app.simulation.bounds.height = rect.height;
         this.app.simulation.shapes = modifiedPreset.shapes || [];
-        this.app.simulation.sensor = modifiedPreset.sensor || null;
+        // Support both single sensor and sensors array
+        this.app.simulation.sensors = modifiedPreset.sensors || (modifiedPreset.sensor ? [modifiedPreset.sensor] : []);
+        
+        // Set liquid configuration BEFORE init
+        if (modifiedPreset.liquid) {
+            this.app.simulation.liquidConfig = modifiedPreset.liquid;
+        }
+        
         this.app.simulation.init(modifiedPreset.initType || 'center');
         
         // Restore other settings from preset

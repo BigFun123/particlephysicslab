@@ -33,15 +33,26 @@ export class ParticleSimulation {
         this.emitter = null;
         this.emitterAccumulator = 0;
         this.activeParticles = 0; // Track actually active particles
+        this.nextParticleIndex = 0; // Track which particle to reuse next
         
         // Edge collision behavior
         this.wrapEdges = false;
         this.particleCollisions = true;
+        
+        // Liquid simulation (SPH - Smoothed Particle Hydrodynamics)
+        this.liquidConfig = null;
+        this.densities = null;
+        this.pressures = null;
     }
 
     init(initType = 'center') {
-        // If emitter is managing particles, skip re-allocating particle arrays
-        if (this.emitter && this.emitter.maxParticles && this.positions) {
+        // If emitter is managing particles, allocate arrays but skip initialization
+        if (this.emitter && this.emitter.maxParticles) {
+            // Allocate arrays if not already allocated
+            if (!this.positions) {
+                this.positions = new Float32Array(this.particleCount * 2);
+                this.velocities = new Float32Array(this.particleCount * 2);
+            }
             if (this.sensors.length > 0) this.initSensors();
             this.initCirclePhysics();
             this.initForceField();
@@ -59,6 +70,8 @@ export class ParticleSimulation {
             this.initRandom();
         } else if (initType === 'static') {
             this.initStatic();
+        } else if (initType === 'liquid') {
+            this.initLiquid();
         }
         
         if (this.sensors.length > 0) {
@@ -256,6 +269,38 @@ export class ParticleSimulation {
         }
     }
 
+    initLiquid() {
+        // Initialize liquid particles in a compact area (top-center)
+        const startX = this.bounds.width * 0.3;
+        const startY = 100;
+        const width = this.bounds.width * 0.4;
+        const height = 300;
+        const spacing = this.liquidConfig ? this.liquidConfig.smoothingRadius * 0.5 : 8;
+        
+        let placed = 0;
+        for (let y = startY; y < startY + height && placed < this.particleCount; y += spacing) {
+            for (let x = startX; x < startX + width && placed < this.particleCount; x += spacing) {
+                if (!this.isPositionOccupied(x, y)) {
+                    this.positions[placed * 2] = x + (Math.random() - 0.5) * 2;
+                    this.positions[placed * 2 + 1] = y + (Math.random() - 0.5) * 2;
+                    this.velocities[placed * 2] = 0;
+                    this.velocities[placed * 2 + 1] = 0;
+                    placed++;
+                }
+            }
+        }
+        
+        if (placed < this.particleCount) {
+            this.particleCount = placed;
+        }
+        
+        // Initialize liquid-specific arrays
+        if (this.liquidConfig) {
+            this.densities = new Float32Array(this.particleCount);
+            this.pressures = new Float32Array(this.particleCount);
+        }
+    }
+
     update(deltaTime) {
         const dt = deltaTime * this.speedMultiplier;
         this.time += dt;
@@ -268,6 +313,11 @@ export class ParticleSimulation {
         
         if (this.showForceField) {
             this.updateForceField();
+        }
+        
+        // Update liquid simulation if enabled
+        if (this.liquidConfig && this.liquidConfig.enabled) {
+            this.updateLiquidSimulation(dt);
         }
 
         if (this.sensorHits.length > 0) {
@@ -369,23 +419,40 @@ export class ParticleSimulation {
                     }
                 }
 
-                const bounceFactorX = shape.bounceX ? 1.0 : 0.5;
-                const bounceFactorY = shape.bounceY ? 1.0 : 0.5;
+                // Handle edge behavior - wrap or bounce
+                if (shape.wrapEdges) {
+                    // Wrap around edges
+                    if (shape.x - shape.radius > this.bounds.width) {
+                        shape.x = -shape.radius;
+                    } else if (shape.x + shape.radius < 0) {
+                        shape.x = this.bounds.width + shape.radius;
+                    }
+                    
+                    if (shape.y - shape.radius > this.bounds.height) {
+                        shape.y = -shape.radius;
+                    } else if (shape.y + shape.radius < 0) {
+                        shape.y = this.bounds.height + shape.radius;
+                    }
+                } else {
+                    // Bounce off edges
+                    const bounceFactorX = shape.bounceX ? 1.0 : 0.5;
+                    const bounceFactorY = shape.bounceY ? 1.0 : 0.5;
 
-                if (shape.x - shape.radius <= 0) {
-                    shape.x = shape.radius;
-                    shape.vx = Math.abs(shape.vx) * bounceFactorX;
-                } else if (shape.x + shape.radius >= this.bounds.width) {
-                    shape.x = this.bounds.width - shape.radius;
-                    shape.vx = -Math.abs(shape.vx) * bounceFactorX;
-                }
-                
-                if (shape.y - shape.radius <= 0) {
-                    shape.y = shape.radius;
-                    shape.vy = Math.abs(shape.vy) * bounceFactorY;
-                } else if (shape.y + shape.radius >= this.bounds.height) {
-                    shape.y = this.bounds.height - shape.radius;
-                    shape.vy = -Math.abs(shape.vy) * bounceFactorY;
+                    if (shape.x - shape.radius <= 0) {
+                        shape.x = shape.radius;
+                        shape.vx = Math.abs(shape.vx) * bounceFactorX;
+                    } else if (shape.x + shape.radius >= this.bounds.width) {
+                        shape.x = this.bounds.width - shape.radius;
+                        shape.vx = -Math.abs(shape.vx) * bounceFactorX;
+                    }
+                    
+                    if (shape.y - shape.radius <= 0) {
+                        shape.y = shape.radius;
+                        shape.vy = Math.abs(shape.vy) * bounceFactorY;
+                    } else if (shape.y + shape.radius >= this.bounds.height) {
+                        shape.y = this.bounds.height - shape.radius;
+                        shape.vy = -Math.abs(shape.vy) * bounceFactorY;
+                    }
                 }
             }
         });
@@ -451,8 +518,8 @@ export class ParticleSimulation {
 
         for (const shape of this.shapes) {
             if (shape.type === 'rect') {
-                if (shape.rotating && shape.rotationSpeed) {
-                    // Handle rotating rectangle collision
+                if ((shape.rotating && shape.rotationSpeed) || shape.angle !== undefined) {
+                    // Handle rotating or angled rectangle collision
                     this.handleRotatingRectCollision(idx, shape, x, y, r);
                 } else {
                     // Handle static rectangle collision
@@ -528,9 +595,30 @@ export class ParticleSimulation {
         // Check if shape has acceleration property - if so, only accelerate, don't collide
         if (shape.accelerate) {
             if (cx >= rx && cx <= rx + rw && cy >= ry && cy <= ry + rh) {
-                // Particle is inside accelerator - apply acceleration vector
-                this.velocities[idx] += shape.accelerate.x;
-                this.velocities[idx + 1] += shape.accelerate.y;
+                // Get current velocity
+                const vx = this.velocities[idx];
+                const vy = this.velocities[idx + 1];
+                const currentSpeed = Math.sqrt(vx * vx + vy * vy);
+                
+                // Normalize the acceleration direction
+                const accelMag = Math.sqrt(shape.accelerate.x * shape.accelerate.x + shape.accelerate.y * shape.accelerate.y);
+                if (accelMag > 0.01) {
+                    const accelDirX = shape.accelerate.x / accelMag;
+                    const accelDirY = shape.accelerate.y / accelMag;
+                    
+                    // Strongly lerp velocity direction towards acceleration direction
+                    const lerpFactor = 0.5;
+                    const newVx = vx + (accelDirX * currentSpeed - vx) * lerpFactor;
+                    const newVy = vy + (accelDirY * currentSpeed - vy) * lerpFactor;
+                    
+                    // Normalize and add speed
+                    const newSpeed = Math.sqrt(newVx * newVx + newVy * newVy);
+                    if (newSpeed > 0.01) {
+                        const finalSpeed = currentSpeed + accelMag;
+                        this.velocities[idx] = (newVx / newSpeed) * finalSpeed;
+                        this.velocities[idx + 1] = (newVy / newSpeed) * finalSpeed;
+                    }
+                }
             }
             return; // Skip all collision handling for accelerator shapes
         }
@@ -565,8 +653,12 @@ export class ParticleSimulation {
                 this.positions[idx + 1] += ny * (overlap + 0.1);
                 const dot = this.velocities[idx] * nx + this.velocities[idx + 1] * ny;
                 if (dot < 0) {
-                    this.velocities[idx] = (this.velocities[idx] - 2 * dot * nx) * this.damping;
-                    this.velocities[idx + 1] = (this.velocities[idx + 1] - 2 * dot * ny) * this.damping;
+                    // Use liquid restitution if available, otherwise use damping
+                    const restitution = (this.liquidConfig && this.liquidConfig.restitution !== undefined) 
+                        ? this.liquidConfig.restitution 
+                        : this.damping;
+                    this.velocities[idx] = (this.velocities[idx] - 2 * dot * nx) * restitution;
+                    this.velocities[idx + 1] = (this.velocities[idx + 1] - 2 * dot * ny) * restitution;
                 }
             } else {
                 // Particle is inside rect - push out through nearest face
@@ -575,18 +667,22 @@ export class ParticleSimulation {
                 const dTop = cy - ry;
                 const dBottom = (ry + rh) - cy;
                 const minD = Math.min(dLeft, dRight, dTop, dBottom);
+                // Use liquid restitution if available, otherwise use damping
+                const restitution = (this.liquidConfig && this.liquidConfig.restitution !== undefined) 
+                    ? this.liquidConfig.restitution 
+                    : this.damping;
                 if (minD === dLeft) {
                     this.positions[idx] = rx - r;
-                    this.velocities[idx] = -Math.abs(this.velocities[idx]) * this.damping;
+                    this.velocities[idx] = -Math.abs(this.velocities[idx]) * restitution;
                 } else if (minD === dRight) {
                     this.positions[idx] = rx + rw + r;
-                    this.velocities[idx] = Math.abs(this.velocities[idx]) * this.damping;
+                    this.velocities[idx] = Math.abs(this.velocities[idx]) * restitution;
                 } else if (minD === dTop) {
                     this.positions[idx + 1] = ry - r;
-                    this.velocities[idx + 1] = -Math.abs(this.velocities[idx + 1]) * this.damping;
+                    this.velocities[idx + 1] = -Math.abs(this.velocities[idx + 1]) * restitution;
                 } else {
                     this.positions[idx + 1] = ry + rh + r;
-                    this.velocities[idx + 1] = Math.abs(this.velocities[idx + 1]) * this.damping;
+                    this.velocities[idx + 1] = Math.abs(this.velocities[idx + 1]) * restitution;
                 }
             }
             return;
@@ -615,14 +711,20 @@ export class ParticleSimulation {
 
             const dot = vx * nx + vy * ny;
             if (dot < 0) {
-                this.velocities[idx] = (vx - 2 * dot * nx) * this.damping;
-                this.velocities[idx + 1] = (vy - 2 * dot * ny) * this.damping;
+                // Use liquid restitution if available, otherwise use damping
+                const restitution = (this.liquidConfig && this.liquidConfig.restitution !== undefined) 
+                    ? this.liquidConfig.restitution 
+                    : this.damping;
+                this.velocities[idx] = (vx - 2 * dot * nx) * restitution;
+                this.velocities[idx + 1] = (vy - 2 * dot * ny) * restitution;
             }
         }
     }
 
     handleRotatingRectCollision(idx, shape, x, y, r) {
-        const {x: rx, y: ry, width: rw, height: rh, angle, rotationSpeed} = shape;
+        const {x: rx, y: ry, width: rw, height: rh, rotationSpeed} = shape;
+        // Use the angle directly (already in radians)
+        const angle = shape.angle !== undefined ? shape.angle : 0;
         
         // Calculate center of rectangle
         const centerX = rx + rw / 2;
@@ -644,6 +746,62 @@ export class ParticleSimulation {
         const dy = localY - closestY;
         const distSq = dx * dx + dy * dy;
 
+        // Check if shape has acceleration property - if so, only accelerate, don't collide
+        if (shape.accelerate) {
+            // Check if particle is inside the rotated rectangle
+            if (Math.abs(localX) <= halfW && Math.abs(localY) <= halfH) {
+                // Get current velocity
+                const vx = this.velocities[idx];
+                const vy = this.velocities[idx + 1];
+                const currentSpeed = Math.sqrt(vx * vx + vy * vy);
+                
+                // Calculate direction to center line (localY = 0) in local space
+                const centeringForce = -localY / halfH; // Normalized distance from center (-1 to 1)
+                
+                // Rotate acceleration vector by shape's angle to world space
+                const accelCos = Math.cos(angle);
+                const accelSin = Math.sin(angle);
+                let worldAccelX = accelCos * shape.accelerate.x - accelSin * shape.accelerate.y;
+                let worldAccelY = accelSin * shape.accelerate.x + accelCos * shape.accelerate.y;
+                
+                // Store original acceleration magnitude for speed increase
+                const originalAccelMag = Math.sqrt(worldAccelX * worldAccelX + worldAccelY * worldAccelY);
+                
+                // Add centering component perpendicular to acceleration direction
+                const perpX = -worldAccelY; // Perpendicular to acceleration
+                const perpY = worldAccelX;
+                const perpMag = Math.sqrt(perpX * perpX + perpY * perpY);
+                if (perpMag > 0.01) {
+                    const centeringStrength = 5.0; // Strong centering
+                    worldAccelX += (perpX / perpMag) * centeringForce * centeringStrength;
+                    worldAccelY += (perpY / perpMag) * centeringForce * centeringStrength;
+                }
+                
+                // Normalize the combined direction for steering
+                const accelMag = Math.sqrt(worldAccelX * worldAccelX + worldAccelY * worldAccelY);
+                if (accelMag > 0.01) {
+                    const accelDirX = worldAccelX / accelMag;
+                    const accelDirY = worldAccelY / accelMag;
+                    
+                    // Strongly lerp velocity direction towards acceleration direction
+                    const lerpFactor = 0.5;
+                    const newVx = vx + (accelDirX * currentSpeed - vx) * lerpFactor;
+                    const newVy = vy + (accelDirY * currentSpeed - vy) * lerpFactor;
+                    
+                    // Normalize to get direction
+                    const newSpeed = Math.sqrt(newVx * newVx + newVy * newVy);
+                    if (newSpeed > 0.01) {
+                        // Apply direction AND add speed from original acceleration
+                        const speedIncrease = originalAccelMag;
+                        const finalSpeed = currentSpeed + speedIncrease;
+                        this.velocities[idx] = (newVx / newSpeed) * finalSpeed;
+                        this.velocities[idx + 1] = (newVy / newSpeed) * finalSpeed;
+                    }
+                }
+            }
+            return; // Skip all collision handling for accelerator shapes
+        }
+
         if (distSq < r * r) {
             const dist = Math.sqrt(distSq);
             if (dist > 0.01) {
@@ -660,19 +818,24 @@ export class ParticleSimulation {
                 this.positions[idx] += worldNx * overlap;
                 this.positions[idx + 1] += worldNy * overlap;
 
-                // Calculate surface velocity at collision point
-                // Convert closest point back to world space
-                const worldClosestX = cos * closestX - sin * closestY + centerX;
-                const worldClosestY = sin * closestX + cos * closestY + centerY;
+                // Calculate surface velocity at collision point (only for rotating shapes)
+                let surfaceVelX = 0;
+                let surfaceVelY = 0;
                 
-                // Calculate velocity of rotating surface at this point
-                // v = ω × r (cross product in 2D: perpendicular to radius)
-                const radiusX = worldClosestX - centerX;
-                const radiusY = worldClosestY - centerY;
-                
-                // Perpendicular velocity due to rotation (tangent to circle)
-                const surfaceVelX = -radiusY * rotationSpeed;
-                const surfaceVelY = radiusX * rotationSpeed;
+                if (rotationSpeed) {
+                    // Convert closest point back to world space
+                    const worldClosestX = cos * closestX - sin * closestY + centerX;
+                    const worldClosestY = sin * closestX + cos * closestY + centerY;
+                    
+                    // Calculate velocity of rotating surface at this point
+                    // v = ω × r (cross product in 2D: perpendicular to radius)
+                    const radiusX = worldClosestX - centerX;
+                    const radiusY = worldClosestY - centerY;
+                    
+                    // Perpendicular velocity due to rotation (tangent to circle)
+                    surfaceVelX = -radiusY * rotationSpeed;
+                    surfaceVelY = radiusX * rotationSpeed;
+                }
 
                 // Reflect particle velocity relative to moving surface
                 const relativeVelX = this.velocities[idx] - surfaceVelX;
@@ -686,8 +849,12 @@ export class ParticleSimulation {
                     const reflectedRelVelY = relativeVelY - 2 * dot * worldNy;
                     
                     // Add surface velocity back and apply damping
-                    this.velocities[idx] = (reflectedRelVelX + surfaceVelX) * this.damping;
-                    this.velocities[idx + 1] = (reflectedRelVelY + surfaceVelY) * this.damping;
+                    // Use liquid restitution if available, otherwise use damping
+                    const restitution = (this.liquidConfig && this.liquidConfig.restitution !== undefined) 
+                        ? this.liquidConfig.restitution 
+                        : this.damping;
+                    this.velocities[idx] = (reflectedRelVelX + surfaceVelX) * restitution;
+                    this.velocities[idx + 1] = (reflectedRelVelY + surfaceVelY) * restitution;
                 }
             }
         }
@@ -706,9 +873,30 @@ export class ParticleSimulation {
         // Check if shape has acceleration property - if so, only accelerate, don't collide
         if (shape.accelerate) {
             if (distSq < radius * radius) {
-                // Particle is inside accelerator - apply acceleration vector
-                this.velocities[idx] += shape.accelerate.x;
-                this.velocities[idx + 1] += shape.accelerate.y;
+                // Get current velocity
+                const vx = this.velocities[idx];
+                const vy = this.velocities[idx + 1];
+                const currentSpeed = Math.sqrt(vx * vx + vy * vy);
+                
+                // Normalize the acceleration direction
+                const accelMag = Math.sqrt(shape.accelerate.x * shape.accelerate.x + shape.accelerate.y * shape.accelerate.y);
+                if (accelMag > 0.01) {
+                    const accelDirX = shape.accelerate.x / accelMag;
+                    const accelDirY = shape.accelerate.y / accelMag;
+                    
+                    // Strongly lerp velocity direction towards acceleration direction
+                    const lerpFactor = 0.5;
+                    const newVx = vx + (accelDirX * currentSpeed - vx) * lerpFactor;
+                    const newVy = vy + (accelDirY * currentSpeed - vy) * lerpFactor;
+                    
+                    // Normalize and add speed
+                    const newSpeed = Math.sqrt(newVx * newVx + newVy * newVy);
+                    if (newSpeed > 0.01) {
+                        const finalSpeed = currentSpeed + accelMag;
+                        this.velocities[idx] = (newVx / newSpeed) * finalSpeed;
+                        this.velocities[idx + 1] = (newVy / newSpeed) * finalSpeed;
+                    }
+                }
             }
             return; // Skip all collision handling for accelerator shapes
         }
@@ -749,8 +937,12 @@ export class ParticleSimulation {
                 // Static circle - plain reflection with damping
                 const dot = this.velocities[idx] * nx + this.velocities[idx + 1] * ny;
                 if (dot < 0) {
-                    this.velocities[idx] = (this.velocities[idx] - 2 * dot * nx) * this.damping;
-                    this.velocities[idx + 1] = (this.velocities[idx + 1] - 2 * dot * ny) * this.damping;
+                    // Use liquid restitution if available, otherwise use damping
+                    const restitution = (this.liquidConfig && this.liquidConfig.restitution !== undefined) 
+                        ? this.liquidConfig.restitution 
+                        : this.damping;
+                    this.velocities[idx] = (this.velocities[idx] - 2 * dot * nx) * restitution;
+                    this.velocities[idx + 1] = (this.velocities[idx + 1] - 2 * dot * ny) * restitution;
                 }
             }
         }
@@ -1061,8 +1253,9 @@ export class ParticleSimulation {
         for (let i = 0; i < particlesToEmit; i++) {
             // Check if we've reached max particles
             if (this.emitter.maxParticles && this.activeParticles >= this.emitter.maxParticles) {
-                // Reuse oldest particle by shifting it to the emitter
-                this.emitParticle(0);
+                // Reuse particles in round-robin fashion
+                this.emitParticle(this.nextParticleIndex);
+                this.nextParticleIndex = (this.nextParticleIndex + 1) % this.emitter.maxParticles;
             } else if (this.activeParticles < this.particleCount) {
                 // Emit new particle
                 this.emitParticle(this.activeParticles);
@@ -1076,19 +1269,27 @@ export class ParticleSimulation {
         
         // Check if emitter has a direction vector
         if (this.emitter.direction) {
-            // Emit in specified direction with small random spread
+            // Emit in specified direction with configurable spread
             const baseAngle = Math.atan2(this.emitter.direction.y, this.emitter.direction.x);
-            const spread = this.emitter.spread || 0.2; // Default spread of 0.2 radians (~11 degrees)
+            const spread = this.emitter.spread !== undefined ? this.emitter.spread : 0.2; // Default spread of 0.2 radians (~11 degrees)
             const angle = baseAngle + (Math.random() - 0.5) * spread;
             
-            // Position at emitter location with small random offset
-            const offsetRadius = Math.random() * this.emitter.radius * 0.5;
-            const offsetAngle = Math.random() * Math.PI * 2;
-            this.positions[idx] = this.emitter.x + Math.cos(offsetAngle) * offsetRadius;
-            this.positions[idx + 1] = this.emitter.y + Math.sin(offsetAngle) * offsetRadius;
+            // Position offset: if spread is 0, spawn at exact emitter position; otherwise random circle
+            if (spread === 0) {
+                // Spawn at exact emitter position for perfect line
+                this.positions[idx] = this.emitter.x;
+                this.positions[idx + 1] = this.emitter.y;
+            } else {
+                // Random offset within emitter radius
+                const offsetRadius = Math.random() * this.emitter.radius * 0.5;
+                const offsetAngle = Math.random() * Math.PI * 2;
+                this.positions[idx] = this.emitter.x + Math.cos(offsetAngle) * offsetRadius;
+                this.positions[idx + 1] = this.emitter.y + Math.sin(offsetAngle) * offsetRadius;
+            }
             
-            // Velocity in specified direction with speed variation
-            const speed = this.emitter.particleSpeed * (0.8 + Math.random() * 0.4);
+            // Velocity: if spread is 0, use exact speed; otherwise add variation
+            const speedVariation = spread === 0 ? 0 : 0.2;
+            const speed = this.emitter.particleSpeed * (1.0 - speedVariation + Math.random() * speedVariation * 2);
             this.velocities[idx] = Math.cos(angle) * speed;
             this.velocities[idx + 1] = Math.sin(angle) * speed;
         } else {
@@ -1104,6 +1305,114 @@ export class ParticleSimulation {
             const speed = this.emitter.particleSpeed * (0.8 + Math.random() * 0.4);
             this.velocities[idx] = Math.cos(angle) * speed;
             this.velocities[idx + 1] = Math.sin(angle) * speed;
+        }
+    }
+
+    // SPH (Smoothed Particle Hydrodynamics) kernel function
+    sphKernel(r, h) {
+        if (r >= h) return 0;
+        const q = r / h;
+        const factor = 315.0 / (64.0 * Math.PI * Math.pow(h, 9));
+        return factor * Math.pow(h * h - r * r, 3);
+    }
+
+    // SPH kernel gradient
+    sphKernelGradient(dx, dy, r, h) {
+        if (r >= h || r < 0.0001) return { x: 0, y: 0 };
+        const q = r / h;
+        const factor = -945.0 / (32.0 * Math.PI * Math.pow(h, 9));
+        const gradMag = factor * Math.pow(h * h - r * r, 2);
+        return {
+            x: gradMag * dx,
+            y: gradMag * dy
+        };
+    }
+
+    updateLiquidSimulation(dt) {
+        const config = this.liquidConfig;
+        const h = config.smoothingRadius;
+        const h2 = h * h;
+        
+        // Step 1: Compute densities
+        for (let i = 0; i < this.particleCount; i++) {
+            const xi = this.positions[i * 2];
+            const yi = this.positions[i * 2 + 1];
+            let density = 0;
+            
+            // Find neighbors within smoothing radius
+            for (let j = 0; j < this.particleCount; j++) {
+                const xj = this.positions[j * 2];
+                const yj = this.positions[j * 2 + 1];
+                const dx = xi - xj;
+                const dy = yi - yj;
+                const r2 = dx * dx + dy * dy;
+                
+                if (r2 < h2) {
+                    const r = Math.sqrt(r2);
+                    density += config.particleMass * this.sphKernel(r, h);
+                }
+            }
+            
+            this.densities[i] = Math.max(density, config.restDensity * 0.01);
+        }
+        
+        // Step 2: Compute pressures
+        for (let i = 0; i < this.particleCount; i++) {
+            // Equation of state: P = k * (ρ - ρ₀)
+            this.pressures[i] = config.gasConstant * (this.densities[i] - config.restDensity);
+        }
+        
+        // Step 3: Compute forces and update velocities
+        for (let i = 0; i < this.particleCount; i++) {
+            const xi = this.positions[i * 2];
+            const yi = this.positions[i * 2 + 1];
+            let fx = 0;
+            let fy = config.gravity; // Gravity force
+            
+            // Pressure and viscosity forces
+            for (let j = 0; j < this.particleCount; j++) {
+                if (i === j) continue;
+                
+                const xj = this.positions[j * 2];
+                const yj = this.positions[j * 2 + 1];
+                const dx = xi - xj;
+                const dy = yi - yj;
+                const r2 = dx * dx + dy * dy;
+                
+                if (r2 < h2 && r2 > 0.0001) {
+                    const r = Math.sqrt(r2);
+                    const grad = this.sphKernelGradient(dx, dy, r, h);
+                    
+                    // Pressure force (symmetric formulation)
+                    const pressureTerm = (this.pressures[i] + this.pressures[j]) / 
+                                        (2.0 * this.densities[j]);
+                    fx -= config.particleMass * pressureTerm * grad.x;
+                    fy -= config.particleMass * pressureTerm * grad.y;
+                    
+                    // Viscosity force
+                    const vxi = this.velocities[i * 2];
+                    const vyi = this.velocities[i * 2 + 1];
+                    const vxj = this.velocities[j * 2];
+                    const vyj = this.velocities[j * 2 + 1];
+                    const dvx = vxj - vxi;
+                    const dvy = vyj - vyi;
+                    
+                    const viscosityTerm = config.viscosity * config.particleMass / this.densities[j];
+                    const dot = (dx * dvx + dy * dvy) / (r2 + 0.01 * h2);
+                    fx += viscosityTerm * dot * dx;
+                    fy += viscosityTerm * dot * dy;
+                }
+            }
+            
+            // Update velocity
+            const acceleration_x = fx / this.densities[i];
+            const acceleration_y = fy / this.densities[i];
+            this.velocities[i * 2] += acceleration_x * dt;
+            this.velocities[i * 2 + 1] += acceleration_y * dt;
+            
+            // Apply damping
+            this.velocities[i * 2] *= this.damping;
+            this.velocities[i * 2 + 1] *= this.damping;
         }
     }
 }

@@ -4,7 +4,7 @@
         "equation": "$$E = mc^2 \\quad \\varphi \\rightarrow \\varphi + \\delta\\varphi$$",
         "description": "A slowly cooling universe. The universe is not empty, it is filled with a field that gives particles mass. The more particles, the stronger the field. Force field shows that as the field cools, it loses energy.",
         "particles": 1000,
-        "initType": "random",        
+        "initType": "random",
         "speed": 1.5,
         "damping": 0.99,
         "showForceField": true,
@@ -17,230 +17,12 @@
         "equation": "$$S = k \\cdot \\ln(\\Omega)$$",
         "description": "Entropy is the stable state of the universe. But with no energy loss, matter can not exist.",
         "particles": 10000,
-        "initType": "random",        
+        "initType": "random",
         "speed": 1.5,
         "damping": 1.00,
         "wrapEdges": true,
         "shapes": [],
         "glowIntensity": 6.0
-    },
-    {
-        "name": "Quantum Condensation",
-        "equation": "$$\\psi(\\mathbf{r},t) = \\sum_n c_n \\phi_n(\\mathbf{r})\\, e^{-iE_n t/\\hbar}$$",
-        "description": "From nothing, something. Particles condense into a stable state, a quantum condensation process. Matter.",
-        "particles": 100000,
-        "initType": "random",
-        "damping": 0.25,
-        "wrapEdges": true,
-        "shapes": [],
-        "glowIntensity": 3.0
-    },
-    {
-        "name": "Flame Simulation",
-        "equation": "$$\\frac{\\partial T}{\\partial t} = \\alpha \\nabla^2 T + \\dot{Q}$$",
-        "description": "Fire is hollow",
-        "particles": 10000,
-        "initType": "center",
-        "showForceField": true,
-        "shapes": []
-    },
-    {
-        "name": "Double Slit Experiment",
-        "equation": "$$P = |\\psi_1 + \\psi_2|^2$$",
-        "description": "One packet of particles (a photon wave) creates two beams of light, with multiple obervable points",
-        "particles": 50000,
-        "initType": "left",
-        "shapes": [
-            {
-                "type": "rect",
-                "x": 400,
-                "y": 0,
-                "width": 50,
-                "height": 200
-            },
-            {
-                "type": "rect",
-                "x": 400,
-                "y": 280,
-                "width": 50,
-                "height": 250
-            },
-            {
-                "type": "rect",
-                "x": 400,
-                "y": 750,
-                "width": 50,
-                "height": 250
-            },
-            {
-                "type": "rect",
-                "x": 400,
-                "y": 600,
-                "width": 50,
-                "height": 200
-            },
-             {
-                "type": "rect",
-                "x": 1200,
-                "y": 0,
-                "width": 150,
-                "height": 1200
-            }
-        ],
-        "sensor": {
-            "type": "rect",
-            "x": 800,
-            "y": 0,
-            "width": 20,
-            "height": 1000
-        }
-    },
-    {
-        "name": "Maze Challenge",
-        "equation": "$$I = I_0 \\cdot T^n$$",
-        "description": "This shows how light can be emitted even when there is no direct path, as long as there are enough particles to create a path through the maze.",
-        "particles": 20000,
-        "initType": "left",
-        "shapes": [
-            {
-                "type": "rect",
-                "x": 300,
-                "y": 0,
-                "width": 30,
-                "height": 400
-            },
-            {
-                "type": "rect",
-                "x": 300,
-                "y": 500,
-                "width": 30,
-                "height": 400
-            },
-            {
-                "type": "rect",
-                "x": 600,
-                "y": 200,
-                "width": 30,
-                "height": 400
-            },
-            {
-                "type": "rect",
-                "x": 600,
-                "y": 700,
-                "width": 30,
-                "height": 400
-            },
-            {
-                "type": "rect",
-                "x": 900,
-                "y": 0,
-                "width": 30,
-                "height": 500
-            },
-            {
-                "type": "rect",
-                "x": 900,
-                "y": 600,
-                "width": 30,
-                "height": 400
-            }
-        ],
-         "sensor": {
-            "type": "rect",
-            "x": 1100,
-            "y": 0,
-            "width": 50,
-            "height": 1000
-        }
-    },
-    {
-        "name": "Cloud Chamber",
-        "equation": "$$r = \\frac{mv}{qB}$$",
-        "description": "Simulates a cloud chamber where particles are emitted from a radioactive source and interact with a sensor (observer). Occasionally pleasing collisions are observed, showing 'strange' paths.",
-        "particles": 0,
-        "initType": "emitter",
-        "particleSize": 5.0,
-        "speed": 1.3,
-        "emitter": {
-            "x": -1,
-            "y": -1,
-            "radius": 10,
-            "particlesPerSecond": 5,
-            "maxParticles": 100,
-            "particleSpeed": 150,
-            "color": "#ff8800"
-        },
-        "sensor": {
-            "type": "rect",
-            "x": -1,
-            "y": -1,
-            "width": 500,
-            "height": 500
-        }
-    },
-    {
-        "name": "Magnetic Fields",
-        "equation": "$$\\nabla \\times \\mathbf{B} = \\mu_0 \\mathbf{J} \\qquad \\mathbf{F} = q\\mathbf{v} \\times \\mathbf{B}$$",
-        "description": "Simulates magnetic fields and their interactions with magnetic (aligned) metal crystals, like magnetized iron.",
-        "particles": 25000,
-        "initType": "center",
-        "wrapEdges": true,
-        "particleSize": 3.0,
-        "speed": 0.6,
-        "damping": 0.89,
-        "shapes": [
-            {
-                "type": "rect",
-                "x": 400,
-                "y": 300,
-                "width": 400,
-                "height": 30
-            },
-            {
-                "type": "rect",
-                "x": 1100,
-                "y": 300,
-                "width": 400,
-                "height": 30
-            },
-            {
-                "type": "rect",
-                "x": 600,
-                "y": 600,
-                "width": 300,
-                "height": 30
-            },
-            {
-                "type": "rect",
-                "x": 1000,
-                "y": 600,
-                "width": 300,
-                "height": 30
-            }
-        ]
-    },
-    {
-        "name": "Photon Generation",
-        "equation": "$$E = hf \\qquad f = \\frac{\\omega}{2\\pi}$$",
-        "description": "A photon (a wave with a frequency we can detect) is generated by asymmetry of spinning atoms, exaggerated here by the rectangle. The faster it rotates, the higher the frequency.",
-        "particles": 50000,
-        "initType": "static",
-        "glowIntensity": 3.0,
-        "particleSize": 2.0,
-        "damping": 0.95,
-        "speed": 0.6,
-        "showForceField": true,
-        "shapes": [
-            {
-                "type": "rect",
-                "x": 560,
-                "y": 390,
-                "width": 300,
-                "height": 30,
-                "rotating": true,
-                "rotationSpeed": 0.3
-            }
-        ]
     },
     {
         "name": "Gravity",
@@ -270,6 +52,45 @@
             {
                 "type": "circle",
                 "x": 900,
+                "y": 400,
+                "radius": 120,
+                "moveable": true,
+                "absorb": true,
+                "mass": 100,
+                "vx": 0,
+                "vy": 0,
+                "color": "#113311"
+            }
+        ]
+    },
+    {
+        "name": "Gravity Far",
+        "equation": "$$F = P \\cdot A \\qquad P = nkT \\qquad \\Delta P = \\text{shadow deficit}$$",
+        "description": "Any two objects have relatively fewer particles between them due to occlusion and absorbtion by the nucleus, causing gravitational attraction. The more particles, the stronger the gravity. P = n k T  . Karl Lilje 2016",
+        "particles": 75000,
+        "initType": "random",
+        "speed": 0.3,
+        "particleSize": 3.5,
+        "damping": 1.00,
+        "wrapEdges": true,
+        "showForceField": true,
+        "particleCollisions": false,
+        "shapes": [
+            {
+                "type": "circle",
+                "x": 550,
+                "y": 400,
+                "radius": 120,
+                "moveable": true,
+                "absorb": true,
+                "mass": 100,
+                "vx": 0,
+                "vy": 0,
+                "color": "#111133"
+            },
+            {
+                "type": "circle",
+                "x": 1200,
                 "y": 400,
                 "radius": 120,
                 "moveable": true,
@@ -368,6 +189,276 @@
         ]
     },
     {
+        "name": "Quantum Condensation",
+        "equation": "$$\\psi(\\mathbf{r},t) = \\sum_n c_n \\phi_n(\\mathbf{r})\\, e^{-iE_n t/\\hbar}$$",
+        "description": "From nothing, something. Particles condense into a stable state, a quantum condensation process. Matter.",
+        "particles": 100000,
+        "initType": "random",
+        "damping": 0.25,
+        "wrapEdges": true,
+        "shapes": [],
+        "glowIntensity": 3.0
+    },
+    {
+        "name": "Flame Simulation",
+        "equation": "$$\\frac{\\partial T}{\\partial t} = \\alpha \\nabla^2 T + \\dot{Q}$$",
+        "description": "Fire is hollow",
+        "particles": 10000,
+        "initType": "center",
+        "showForceField": true,
+        "shapes": []
+    },
+    {
+        "name": "Double Slit Experiment",
+        "equation": "$$P = |\\psi_1 + \\psi_2|^2$$",
+        "description": "One packet of particles (a photon wave) creates two beams of light, with multiple obervable points",
+        "particles": 50000,
+        "initType": "left",
+        "shapes": [
+            {
+                "type": "rect",
+                "x": 400,
+                "y": 0,
+                "width": 80,
+                "height": 200,
+                "label": "beam guide 1"
+            },
+            {
+                "type": "rect",
+                "x": 400,
+                "y": 280,
+                "width": 80,
+                "height": 250
+            },
+            {
+                "type": "rect",
+                "x": 400,
+                "y": 750,
+                "width": 80,
+                "height": 250
+            },
+            {
+                "type": "rect",
+                "x": 400,
+                "y": 600,
+                "width": 80,
+                "height": 200
+            },
+            {
+                "type": "rect",
+                "x": 1200,
+                "y": 0,
+                "width": 150,
+                "height": 1200
+            }
+        ],
+        "sensor": {
+            "type": "rect",
+            "x": 800,
+            "y": 0,
+            "width": 20,
+            "height": 1000
+        }
+    },
+    {
+        "name": "Maze Challenge",
+        "equation": "$$I = I_0 \\cdot T^n$$",
+        "description": "This shows how light can be emitted even when there is no direct path, as long as there are enough particles to create a path through the maze.",
+        "particles": 20000,
+        "initType": "left",
+        "shapes": [
+            {
+                "type": "rect",
+                "x": 300,
+                "y": 0,
+                "width": 30,
+                "height": 400
+            },
+            {
+                "type": "rect",
+                "x": 300,
+                "y": 500,
+                "width": 30,
+                "height": 400
+            },
+            {
+                "type": "rect",
+                "x": 600,
+                "y": 200,
+                "width": 30,
+                "height": 400
+            },
+            {
+                "type": "rect",
+                "x": 600,
+                "y": 700,
+                "width": 30,
+                "height": 400
+            },
+            {
+                "type": "rect",
+                "x": 900,
+                "y": 0,
+                "width": 30,
+                "height": 500
+            },
+            {
+                "type": "rect",
+                "x": 900,
+                "y": 600,
+                "width": 30,
+                "height": 400
+            }
+        ],
+        "sensor": {
+            "type": "rect",
+            "x": 1100,
+            "y": 0,
+            "width": 80,
+            "height": 1000
+        }
+    },
+    {
+        "name": "Cloud Chamber",
+        "equation": "$$r = \\frac{mv}{qB}$$",
+        "description": "Simulates a cloud chamber where particles are emitted from a radioactive source and interact with a sensor (observer). Occasionally pleasing collisions are observed, showing 'strange' paths.",
+        "particles": 0,
+        "initType": "emitter",
+        "particleSize": 5.0,
+        "speed": 1.3,
+        "emitter": {
+            "x": -1,
+            "y": -1,
+            "radius": 10,
+            "particlesPerSecond": 5,
+            "maxParticles": 100,
+            "particleSpeed": 150,
+            "color": "#ff8800"
+        },
+        "sensor": {
+            "type": "rect",
+            "x": -1,
+            "y": -1,
+            "width": 500,
+            "height": 500
+        }
+    },
+    {
+        "name": "Magnetic Fields",
+        "equation": "$$\\nabla \\times \\mathbf{B} = \\mu_0 \\mathbf{J} \\qquad \\mathbf{F} = q\\mathbf{v} \\times \\mathbf{B}$$",
+        "description": "(WIP) Simulates magnetic fields and their interactions with ferromagnetic (aligned) metal 'crystals', like iron and cobalt. Particles tend to flow in one direction more than the other.",
+        "particles": 15000,
+        "initType": "random",
+        "wrapEdges": true,
+        "particleSize": 3.0,
+        "speed": 1.6,
+        "damping": 0.99,
+        "shapes": [
+            {
+                "type": "circle",
+                "x": 200,
+                "y": 400,
+                "radius": 20,
+                "moveable": true
+            },
+            {
+                "type": "rect",
+                "x": 500,
+                "y": 400,
+                "width": 400,
+                "height": 30,
+                "angle": 0.2618,
+                "color": "#ff1133"
+            },
+            {
+                "type": "rect",
+                "x": 500,
+                "y": 300,
+                "width": 400,
+                "height": 30,
+                "angle": 0.2618,
+                "color": "#ff1133"
+            },
+            {
+                "type": "rect",
+                "x": 500,
+                "y": 600,
+                "width": 400,
+                "height": 30,
+                "angle": -0.2618,
+                "color": "#ff1133"
+            },
+            {
+                "type": "rect",
+                "x": 500,
+                "y": 700,
+                "width": 400,
+                "height": 30,
+                "angle": -0.2618,
+                "color": "#ff1133"
+            },
+            {
+                "type": "rect",
+                "x": 1100,
+                "y": 300,
+                "width": 400,
+                "height": 30,
+                "angle": -0.2818,
+                "color": "#1111ff"
+            },
+            {
+                "type": "rect",
+                "x": 1100,
+                "y": 400,
+                "width": 400,
+                "height": 30,
+                "angle": -0.2818,
+                "color": "#1111ff"
+            },
+            {
+                "type": "rect",
+                "x": 1100,
+                "y": 600,
+                "width": 400,
+                "height": 30,
+                "angle": 0.2618,
+                "color": "#1111ff"
+            },
+            {
+                "type": "rect",
+                "x": 1100,
+                "y": 700,
+                "width": 400,
+                "height": 30,
+                "angle": 0.2618,
+                "color": "#1111ff"
+            }
+        ]
+    },
+    {
+        "name": "Photon Generation",
+        "equation": "$$E = hf \\qquad f = \\frac{\\omega}{2\\pi}$$",
+        "description": "A photon (a wave with a frequency we can detect) is generated by asymmetry of spinning atoms, exaggerated here by the rectangle. The faster it rotates, the higher the frequency.",
+        "particles": 50000,
+        "initType": "static",
+        "glowIntensity": 3.0,
+        "particleSize": 2.0,
+        "damping": 0.95,
+        "speed": 0.6,
+        "showForceField": true,
+        "shapes": [
+            {
+                "type": "rect",
+                "x": 560,
+                "y": 390,
+                "width": 300,
+                "height": 30,
+                "rotating": true,
+                "rotationSpeed": 0.3
+            }
+        ]
+    },
+    {
         "name": "Photon Waves",
         "equation": "$$\\nabla^2 \\mathbf{E} = \\frac{1}{c^2} \\frac{\\partial^2 \\mathbf{E}}{\\partial t^2}$$",
         "description": "An atom oscillates back and forth 'surfing the vacuum', disturbing the surrounding particle field and generating electromagnetic waves that propagate outward at the speed of light.",
@@ -398,7 +489,7 @@
     {
         "name": "Solar System",
         "equation": "$$F = G\\frac{m_1 m_2}{r^2}$$",
-        "description": "A scaled representation of our solar system if we did not orbit the sun. Relative sizes are to scale (Sun radius = 109x Earth). Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune. After some time, the planets begin to orbit the sun. (hampered by the square edges)",
+        "description": "A scaled representation of our solar system if we did not orbit the sun. Relative sizes are to scale (Sun radius = 109x Earth). Planets positioned at their correct relative orbital distances: Mercury (0.39 AU), Venus (0.72 AU), Earth (1.0 AU), Mars (1.52 AU), Jupiter (5.2 AU), Saturn (9.54 AU), Uranus (19.19 AU), Neptune (30.07 AU). After some time, the planets begin to orbit the sun.",
         "particles": 50000,
         "initType": "random",
         "speed": 4.5,
@@ -410,10 +501,10 @@
         "shapes": [
             {
                 "type": "circle",
-                "x": 400,
-                "y": 400,
+                "x": -1,
+                "y": -1,
                 "radius": 109,
-                "moveable": true,
+                "moveable": false,
                 "absorb": true,
                 "mass": 1000,
                 "vx": 0,
@@ -423,8 +514,10 @@
             },
             {
                 "type": "circle",
-                "x": 600,
-                "y": 400,
+                "x": -1,
+                "y": -1,
+                "xOffset": 167.5,
+                "yOffset": 0,
                 "radius": 0.38,
                 "moveable": true,
                 "absorb": true,
@@ -436,8 +529,10 @@
             },
             {
                 "type": "circle",
-                "x": 700,
-                "y": 400,
+                "x": -1,
+                "y": -1,
+                "xOffset": 217,
+                "yOffset": 0,
                 "radius": 0.95,
                 "moveable": true,
                 "absorb": true,
@@ -449,8 +544,10 @@
             },
             {
                 "type": "circle",
-                "x": 800,
-                "y": 400,
+                "x": -1,
+                "y": -1,
+                "xOffset": 259,
+                "yOffset": 0,
                 "radius": 1.0,
                 "moveable": true,
                 "absorb": true,
@@ -462,8 +559,10 @@
             },
             {
                 "type": "circle",
-                "x": 900,
-                "y": 400,
+                "x": -1,
+                "y": -1,
+                "xOffset": 337,
+                "yOffset": 0,
                 "radius": 0.53,
                 "moveable": true,
                 "absorb": true,
@@ -475,8 +574,10 @@
             },
             {
                 "type": "circle",
-                "x": 1100,
-                "y": 400,
+                "x": -1,
+                "y": -1,
+                "xOffset": 0,
+                "yOffset": -889,
                 "radius": 11.2,
                 "moveable": true,
                 "absorb": true,
@@ -488,8 +589,10 @@
             },
             {
                 "type": "circle",
-                "x": 1300,
-                "y": 400,
+                "x": -1,
+                "y": -1,
+                "xOffset": 0,
+                "yOffset": 1540,
                 "radius": 9.45,
                 "moveable": true,
                 "absorb": true,
@@ -501,8 +604,10 @@
             },
             {
                 "type": "circle",
-                "x": 600,
-                "y": 600,
+                "x": -1,
+                "y": -1,
+                "xOffset": -2878,
+                "yOffset": 0,
                 "radius": 4.0,
                 "moveable": true,
                 "absorb": true,
@@ -514,8 +619,10 @@
             },
             {
                 "type": "circle",
-                "x": 800,
-                "y": 600,
+                "x": -1,
+                "y": -1,
+                "xOffset": 4510,
+                "yOffset": 0,
                 "radius": 3.88,
                 "moveable": true,
                 "absorb": true,
@@ -524,183 +631,6 @@
                 "vy": 0,
                 "color": "#4166F5",
                 "label": "Neptune"
-            }
-        ]
-    },
-    {
-        "name": "Particle Accelerator",
-        "equation": "$$E_k = \\frac{1}{2}mv^2 \\qquad \\mathbf{F} = q(\\mathbf{E} + \\mathbf{v} \\times \\mathbf{B})$$",
-        "description": "A circular particle accelerator that accelerates particles through electromagnetic fields. Particles gain energy as they pass through accelerator sections (rectangles) arranged in a ring pattern. Watch as particles spiral outward gaining speed, simulating a synchrotron or cyclotron.",
-        "particles": 5000,
-        "initType": "center",
-        "speed": 0.5,
-        "particleSize": 2.5,
-        "damping": 0.995,
-        "wrapEdges": true,
-        "showForceField": false,
-        "shapes": [
-            {
-                "type": "rect",
-                "x": 550,
-                "y": 200,
-                "width": 100,
-                "height": 20,
-                "accelerate": { "x": 2.0, "y": 0 },
-                "color": "#ff3333",
-                "label": "1"
-            },
-            {
-                "type": "rect",
-                "x": 700,
-                "y": 200,
-                "width": 100,
-                "height": 20,
-                "accelerate": { "x": 2.0, "y": 0 },
-                "color": "#ff3333"
-            },
-            {
-                "type": "rect",
-                "x": 850,
-                "y": 200,
-                "width": 100,
-                "height": 20,
-                "accelerate": { "x": 2.0, "y": 0 },
-                "color": "#ff3333"
-            },
-            {
-                "type": "rect",
-                "x": 1000,
-                "y": 200,
-                "width": 100,
-                "height": 20,
-                "accelerate": { "x": 2.0, "y": 0 },
-                "color": "#ff3333"
-            },
-            {
-                "type": "rect",
-                "x": 1150,
-                "y": 200,
-                "width": 100,
-                "height": 20,
-                "accelerate": { "x": 2.0, "y": 0 },
-                "color": "#ff3333"
-            },
-            {
-                "type": "rect",
-                "x": 550,
-                "y": 770,
-                "width": 100,
-                "height": 20,
-                "accelerate": { "x": -2.0, "y": 0 },
-                "color": "#ff3333"
-            },
-            {
-                "type": "rect",
-                "x": 700,
-                "y": 770,
-                "width": 100,
-                "height": 20,
-                "accelerate": { "x": -2.0, "y": 0 },
-                "color": "#ff3333"
-            },
-            {
-                "type": "rect",
-                "x": 850,
-                "y": 770,
-                "width": 100,
-                "height": 20,
-                "accelerate": { "x": -2.0, "y": 0 },
-                "color": "#ff3333"
-            },
-            {
-                "type": "rect",
-                "x": 1000,
-                "y": 770,
-                "width": 100,
-                "height": 20,
-                "accelerate": { "x": -2.0, "y": 0 },
-                "color": "#ff3333"
-            },
-            {
-                "type": "rect",
-                "x": 1150,
-                "y": 770,
-                "width": 100,
-                "height": 20,
-                "accelerate": { "x": -2.0, "y": 0 },
-                "color": "#ff3333"
-            },
-            {
-                "type": "rect",
-                "x": 550,
-                "y": 240,
-                "width": 20,
-                "height": 90,
-                "accelerate": { "x": 0.0, "y": -2.0 },
-                "color": "#ff3333"
-            },
-            {
-                "type": "rect",
-                "x": 550,
-                "y": 370,
-                "width": 20,
-                "height": 90,
-                "accelerate": { "x": 0.0, "y": -2.0 },
-                "color": "#ff3333"
-            },
-            {
-                "type": "rect",
-                "x": 550,
-                "y": 500,
-                "width": 20,
-                "height": 90,
-                "accelerate": { "x": 0.0, "y": -2.0 },
-                "color": "#ff3333"
-            },
-            {
-                "type": "rect",
-                "x": 550,
-                "y": 630,
-                "width": 20,
-                "height": 120,
-                "accelerate": { "x": 0.0, "y": -2.0 },
-                "color": "#ff3333"
-            },
-            {
-                "type": "rect",
-                "x": 1230,
-                "y": 240,
-                "width": 20,
-                "height": 90,
-                "accelerate": { "x": 0.0, "y": 2.0 },
-                "color": "#ff3333"
-            },
-            {
-                "type": "rect",
-                "x": 1230,
-                "y": 370,
-                "width": 20,
-                "height": 90,
-                "accelerate": { "x": 0.0, "y": 2.0 },
-                "color": "#ff3333"
-            },
-            {
-                "type": "rect",
-                "x": 1230,
-                "y": 500,
-                "width": 20,
-                "height": 90,
-                "accelerate": { "x": 0.0, "y": 2.0 },
-                "color": "#ff3333"
-            },
-            {
-                "type": "rect",
-                "x": 1230,
-                "y": 630,
-                "width": 20,
-                "height": 90,
-                "accelerate": { "x": 0.0, "y": 2.0 },
-                "color": "#ff3333"
             }
         ]
     },
@@ -739,7 +669,7 @@
                 "accelerate": {
                     "x": 5.0,
                     "y": 0
-                },                
+                },
                 "color": "#ff3333"
             },
             {
@@ -846,16 +776,501 @@
                 "type": "rect",
                 "x": 1300,
                 "y": 50,
-                "width": 70,
+                "width": 80,
                 "height": 700
             },
             {
                 "type": "rect",
                 "x": 1400,
                 "y": 50,
-                "width": 70,
+                "width": 80,
                 "height": 700
-            }   
+            }
+        ]
+    },
+    {
+        "name": "Particle Accelerator",
+        "equation": "$$E_k = \\frac{1}{2}mv^2 \\qquad \\mathbf{F} = q(\\mathbf{E} + \\mathbf{v} \\times \\mathbf{B})$$",
+        "description": "A circular particle accelerator that accelerates particles through electromagnetic fields. Particles gain energy as they pass through accelerator sections (rectangles) arranged in a ring pattern. Watch as particles spiral outward gaining speed, simulating a synchrotron or cyclotron.",
+        "particles": 5000,
+        "initType": "random",
+        "speed": 1.5,
+        "particleSize": 2.5,
+        "damping": 0.995,
+        "wrapEdges": true,
+        "showForceField": false,
+        "particleCollisions": false,
+        "emitter": {
+            "x": 1200,
+            "y": 800,
+            "radius": 1,
+            "particlesPerSecond": 50,
+            "maxParticles": 5000,
+            "particleSpeed": 50,
+            "spread": 0.1,
+            "color": "#ff3333",
+            "direction": {
+                "x": -1,
+                "y": 0
+            }
+        },
+        "sensors": [{
+            "type": "rect",
+            "x": 321,
+            "y": 100,
+            "width": 100,
+            "height": 200,
+            "label": "noise reference"
+        },
+        {
+            "type": "rect",
+            "x": 1050,
+            "y": 750,
+            "width": 200,
+            "height": 40
+        }],
+        
+        "shapes": [
+            {
+                "type": "rect",
+                "x": 0,
+                "y": 40,
+                "width": 1920,
+                "height": 44,
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 0,
+                "y": 990,
+                "width": 1920,
+                "height": 44,
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 1090,
+                "y": 490,
+                "width": 80,
+                "height": 24,
+                "angle": 1.571,
+                "accelerate": {
+                    "x": 16.0,
+                    "y": 0
+                },
+                "color": "#ff3333",
+                "label": "1"
+            },
+            {
+                "type": "rect",
+                "x": 1080,
+                "y": 570,
+                "width": 80,
+                "height": 24,
+                "angle": 1.833,
+                "accelerate": {
+                    "x": 6.0,
+                    "y": 0
+                },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 1050,
+                "y": 645,
+                "width": 80,
+                "height": 24,
+                "angle": 2.094,
+                "accelerate": {
+                    "x": 6.0,
+                    "y": 0
+                },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 1000,
+                "y": 710,
+                "width": 80,
+                "height": 24,
+                "angle": 2.356,
+                "accelerate": {
+                    "x": 6.0,
+                    "y": 0
+                },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 930,
+                "y": 760,
+                "width": 80,
+                "height": 24,
+                "angle": 2.618,
+                "accelerate": {
+                    "x": 6.0,
+                    "y": 0.0
+                },
+                "color": "#ff33ff"
+            },
+            {
+                "type": "rect",
+                "x": 850,
+                "y": 790,
+                "width": 80,
+                "height": 24,
+                "angle": 2.880,
+                "accelerate": {
+                    "x": 6.0,
+                    "y": 0.00
+                },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 760,
+                "y": 800,
+                "width": 80,
+                "height": 24,
+                "angle": 3.142,
+                "accelerate": {
+                    "x": 6.0,
+                    "y": 0.00
+                },
+                "color": "#fff33"
+            },
+            {
+                "type": "rect",
+                "x": 670,
+                "y": 790,
+                "width": 80,
+                "height": 24,
+                "angle": 3.403,
+                "accelerate": {
+                    "x": 6.0,
+                    "y": 0.00
+                },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 590,
+                "y": 760,
+                "width": 80,
+                "height": 24,
+                "angle": 3.665,
+                "accelerate": {
+                    "x": 6.0,
+                    "y": 0.00
+                },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 520,
+                "y": 710,
+                "width": 80,
+                "height": 24,
+                "angle": 3.927,
+                "accelerate": {
+                    "x": 6.0,
+                    "y": 0
+                },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 470,
+                "y": 645,
+                "width": 80,
+                "height": 24,
+                "angle": 4.189,
+                "accelerate": {
+                    "x": 6.0,
+                    "y": 0
+                },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 440,
+                "y": 570,
+                "width": 80,
+                "height": 24,
+                "angle": 4.451,
+                "accelerate": {
+                    "x": 6.0,
+                    "y": 0
+                },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 430,
+                "y": 490,
+                "width": 80,
+                "height": 24,
+                "angle": 4.712,
+                "accelerate": {
+                    "x": 6.0,
+                    "y": 0
+                },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 440,
+                "y": 410,
+                "width": 80,
+                "height": 24,
+                "angle": 4.974,
+                "accelerate": {
+                    "x": 6.0,
+                    "y": 0
+                },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 470,
+                "y": 335,
+                "width": 80,
+                "height": 24,
+                "angle": 5.236,
+                "accelerate": {
+                    "x": 6.0,
+                    "y": 0
+                },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 520,
+                "y": 270,
+                "width": 80,
+                "height": 24,
+                "angle": 5.498,
+                "accelerate": {
+                    "x": 6.0,
+                    "y": 0
+                },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 590,
+                "y": 220,
+                "width": 80,
+                "height": 24,
+                "angle": 5.759,
+                "accelerate": {
+                    "x": 6.0,
+                    "y": 0
+                },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 670,
+                "y": 190,
+                "width": 80,
+                "height": 24,
+                "angle": 6.021,
+                "accelerate": {
+                    "x": 6.0,
+                    "y": 0
+                },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 760,
+                "y": 180,
+                "width": 80,
+                "height": 24,
+                "angle": 0.0,
+                "accelerate": {
+                    "x": 6.0,
+                    "y": 0
+                },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 850,
+                "y": 190,
+                "width": 80,
+                "height": 24,
+                "angle": 0.262,
+                "accelerate": {
+                    "x": 6.0,
+                    "y": 0
+                },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 930,
+                "y": 220,
+                "width": 80,
+                "height": 24,
+                "angle": 0.524,
+                "accelerate": {
+                    "x": 6.0,
+                    "y": 0
+                },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 1000,
+                "y": 270,
+                "width": 80,
+                "height": 24,
+                "angle": 0.785,
+                "accelerate": {
+                    "x": 6.0,
+                    "y": 0
+                },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 1050,
+                "y": 335,
+                "width": 80,
+                "height": 24,
+                "angle": 1.047,
+                "accelerate": {
+                    "x": 6.0,
+                    "y": 0
+                },
+                "color": "#ff3333"
+            },
+            {
+                "type": "rect",
+                "x": 1080,
+                "y": 410,
+                "width": 80,
+                "height": 24,
+                "angle": 1.309,
+                "accelerate": {
+                    "x": 6.0,
+                    "y": 0
+                },
+                "color": "#ff3333"
+            }
+        ]
+    },
+    {
+        "name": "Quantum Liquid",
+        "equation": "$$\\nabla \\cdot \\mathbf{v} = 0 \\qquad \\rho \\frac{D\\mathbf{v}}{Dt} = -\\nabla p + \\mu \\nabla^2 \\mathbf{v} + \\mathbf{f}$$",
+        "description": "A 2D liquid simulation using Smoothed Particle Hydrodynamics (SPH). Particles interact with each other through pressure, viscosity, and surface tension forces, creating realistic fluid behavior with gravity.",
+        "particles": 3000,
+        "initType": "liquid",
+        "speed": 1.0,
+        "particleSize": 15.0,
+        "damping": 0.995,
+        "wrapEdges": false,
+        "particleCollisions": false,
+        "glowIntensity": 2.5,
+        "liquid": {
+            "enabled": true,
+            "gravity": 200.0,
+            "restDensity": 1000.0,
+            "gasConstant": 8000.0,
+            "viscosity": 0.5,
+            "surfaceTension": 0.0728,
+            "smoothingRadius": 25.0,
+            "particleMass": 1.0,
+            "restitution": 0.3
+        },
+        "shapes": [
+            {
+                "type": "rect",
+                "x": 0,
+                "y": 900,
+                "width": 1920,
+                "height": 180
+            },
+            {
+                "type": "rect",
+                "x": 0,
+                "y": 0,
+                "width": 80,
+                "height": 1080
+            },
+            {
+                "type": "rect",
+                "x": 1870,
+                "y": 0,
+                "width": 80,
+                "height": 1080
+            },
+            {
+                "type": "rect",
+                "x": 600,
+                "y": 600,
+                "width": 300,
+                "height": 30
+            },
+            {
+                "type": "rect",
+                "x": 1000,
+                "y": 450,
+                "width": 300,
+                "height": 30
+            }
+        ]
+    },
+    {
+        "name": "Wormhole",
+        "equation": "$$ds^2 = -c^2dt^2 + dl^2 + (b^2 + l^2)(d\\theta^2 + \\sin^2\\theta d\\phi^2)$$",
+        "description": "A circle travels left to right through space. When it enters the hidden wormhole zone (center rectangle), it experiences reduced resistance and can travel at higher speeds, simulating faster-than-light travel through warped spacetime.",
+        "particles": 12000,
+        "initType": "random",
+        "speed": 1.0,
+        "particleSize": 2.0,
+        "damping": 0.88,
+        "wrapEdges": true,
+        "showForceField": false,
+        "shapes": [
+            {
+                "type": "circle",
+                "x": 200,
+                "y": 400,
+                "radius": 60,
+                "moveable": true,
+                "mass": 150,
+                "vx": 100,
+                "vy": 0,
+                "color": "#4488ff",
+                "wrapEdges": true
+            },
+            {
+                "type": "circle",
+                "x": 200,
+                "y": 100,
+                "radius": 20,
+                "moveable": true,
+                "mass": 50,
+                "vx": 100,
+                "vy": 0,
+                "color": "#4488ff",
+                "wrapEdges": true
+            },
+            {
+                "type": "rect",
+                "x": 300,
+                "y": 300,
+                "width": 620,
+                "height": 300,
+                "hidden": false,
+                "accelerate": {
+                    "x": 4.5,
+                    "y": 0
+                }
+            }
         ]
     }
 ]

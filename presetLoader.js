@@ -118,13 +118,51 @@ export class PresetLoader {
                 const scaledShape = { ...shape };
                 
                 if (shape.type === 'rect') {
-                    scaledShape.x = shape.x * scale + offsetX;
-                    scaledShape.y = shape.y * scale + offsetY;
+                    // Handle -1 values (center positioning) and offsets
+                    if (shape.x === -1) {
+                        scaledShape.x = screenWidth / 2;
+                    } else {
+                        scaledShape.x = shape.x * scale + offsetX;
+                    }
+                    
+                    if (shape.y === -1) {
+                        scaledShape.y = screenHeight / 2;
+                    } else {
+                        scaledShape.y = shape.y * scale + offsetY;
+                    }
+                    
+                    // Apply offsets if present
+                    if (shape.xOffset !== undefined) {
+                        scaledShape.x += shape.xOffset * scale;
+                    }
+                    if (shape.yOffset !== undefined) {
+                        scaledShape.y += shape.yOffset * scale;
+                    }
+                    
                     scaledShape.width = shape.width * scale;
                     scaledShape.height = shape.height * scale;
                 } else if (shape.type === 'circle') {
-                    scaledShape.x = shape.x * scale + offsetX;
-                    scaledShape.y = shape.y * scale + offsetY;
+                    // Handle -1 values (center positioning) and offsets
+                    if (shape.x === -1) {
+                        scaledShape.x = screenWidth / 2;
+                    } else {
+                        scaledShape.x = shape.x * scale + offsetX;
+                    }
+                    
+                    if (shape.y === -1) {
+                        scaledShape.y = screenHeight / 2;
+                    } else {
+                        scaledShape.y = shape.y * scale + offsetY;
+                    }
+                    
+                    // Apply offsets if present
+                    if (shape.xOffset !== undefined) {
+                        scaledShape.x += shape.xOffset * scale;
+                    }
+                    if (shape.yOffset !== undefined) {
+                        scaledShape.y += shape.yOffset * scale;
+                    }
+                    
                     scaledShape.radius = shape.radius * scale;
                     
                     // Scale velocity if present
@@ -208,6 +246,18 @@ export class PresetLoader {
             
             scaledPreset.emitter.radius = scaledPreset.emitter.radius * scale;
             scaledPreset.emitter.particleSpeed = scaledPreset.emitter.particleSpeed * scale;
+        }
+        
+        // Scale liquid configuration
+        if (scaledPreset.liquid) {
+            scaledPreset.liquid = { ...scaledPreset.liquid };
+            // Scale smoothing radius and gravity for screen size
+            if (scaledPreset.liquid.smoothingRadius !== undefined) {
+                scaledPreset.liquid.smoothingRadius = scaledPreset.liquid.smoothingRadius * scale;
+            }
+            if (scaledPreset.liquid.gravity !== undefined) {
+                scaledPreset.liquid.gravity = scaledPreset.liquid.gravity * scale;
+            }
         }
         
         return scaledPreset;

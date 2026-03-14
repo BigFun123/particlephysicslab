@@ -396,14 +396,25 @@ render(positions, velocities, shapes = [], sensors = [], sensorHits = [], forceF
         gl.uniform2f(resLoc, this.canvas.width, this.canvas.height);
 
         gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 2);
+        
+        // Draw label if sensor has one
+        if (sensor.label) {
+            // Position label at the center of the sensor
+            const labelX = sensor.x + sensor.width / 2;
+            const labelY = sensor.y + sensor.height / 2;
+            this.drawLabel(labelX, labelY, sensor.label);
+        }
     }
 
     drawShapes(shapes) {
         if (!shapes || shapes.length === 0) return;
         
         shapes.forEach(shape => {
+            // Skip hidden shapes
+            if (shape.hidden) return;
+            
             if (shape.type === 'rect') {
-                this.drawRect(shape.x, shape.y, shape.width, shape.height, shape.angle || 0);
+                this.drawRect(shape.x, shape.y, shape.width, shape.height, shape.angle || 0, shape.color || '#4d4d66');
             } else if (shape.type === 'circle') {
                 this.drawCircle(shape.x, shape.y, shape.radius, shape.color || '#ffffff');
                 if (shape.moveable && (shape.vx !== undefined || shape.vy !== undefined)) {
@@ -493,7 +504,7 @@ render(positions, velocities, shapes = [], sensors = [], sensorHits = [], forceF
         } : { r: 1, g: 1, b: 1 };
     }
 
-    drawRect(x, y, width, height, angle = 0) {
+    drawRect(x, y, width, height, angle = 0, color = '#4d4d66') {
         const gl = this.gl;
         const dpr = window.devicePixelRatio || 1;
 
@@ -524,10 +535,11 @@ render(positions, velocities, shapes = [], sensors = [], sensorHits = [], forceF
 
             const fragmentShader = this.createShader(gl.FRAGMENT_SHADER, `#version 300 es
                 precision highp float;
+                uniform vec3 u_color;
                 out vec4 fragColor;
                 
                 void main() {
-                    fragColor = vec4(0.3, 0.3, 0.4, 0.5);
+                    fragColor = vec4(u_color, 0.5);
                 }
             `);
 
@@ -571,6 +583,11 @@ render(positions, velocities, shapes = [], sensors = [], sensorHits = [], forceF
 
         const angleLoc = gl.getUniformLocation(this.rectProgram, 'u_angle');
         gl.uniform1f(angleLoc, angle);
+
+        // Set color uniform
+        const colorLoc = gl.getUniformLocation(this.rectProgram, 'u_color');
+        const rgb = this.hexToRgb(color);
+        gl.uniform3f(colorLoc, rgb.r, rgb.g, rgb.b);
 
         gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
