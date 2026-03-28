@@ -108,6 +108,65 @@
                     </div>
                 </div>
 
+                <div class="control-section" id="emitterControlsSection" style="display: none;">
+                    <h3 class="section-title">Emitter Controls</h3>
+
+                    <div class="control-group">
+                        <label class="control-label">
+                            Particles / Second
+                            <span class="control-value" id="emitterParticlesPerSecondValue">0</span>
+                        </label>
+                        <input type="range" id="emitterParticlesPerSecondSlider" min="0" max="2000" step="1" value="0" class="slider">
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">
+                            Particle Speed
+                            <span class="control-value" id="emitterParticleSpeedValue">0</span>
+                        </label>
+                        <input type="range" id="emitterParticleSpeedSlider" min="0" max="500" step="1" value="0" class="slider">
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">
+                            Emitter Radius
+                            <span class="control-value" id="emitterRadiusValue">0</span>
+                        </label>
+                        <input type="range" id="emitterRadiusSlider" min="0" max="100" step="1" value="0" class="slider">
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">
+                            Spread
+                            <span class="control-value" id="emitterSpreadValue">0.00</span>
+                        </label>
+                        <input type="range" id="emitterSpreadSlider" min="0" max="1" step="0.01" value="0" class="slider">
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">
+                            Offset X
+                            <span class="control-value" id="emitterOffsetXValue">0</span>
+                        </label>
+                        <input type="range" id="emitterOffsetXSlider" min="-200" max="200" step="1" value="0" class="slider">
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">
+                            Offset Y
+                            <span class="control-value" id="emitterOffsetYValue">0</span>
+                        </label>
+                        <input type="range" id="emitterOffsetYSlider" min="-200" max="200" step="1" value="0" class="slider">
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">
+                            <input type="checkbox" id="emitterThirdLawCheckbox" checked>
+                            Newton 3rd Law Reaction
+                        </label>
+                    </div>
+                </div>
+
                 <div class="control-section">
                     <h3 class="section-title">Actions</h3>
                     <button class="btn btn-primary" id="resetBtn">Reset Simulation</button>

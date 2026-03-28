@@ -246,6 +246,14 @@ export class PresetLoader {
             
             scaledPreset.emitter.radius = scaledPreset.emitter.radius * scale;
             scaledPreset.emitter.particleSpeed = scaledPreset.emitter.particleSpeed * scale;
+
+            // Scale attachment offsets if present
+            if (scaledPreset.emitter.offsetX !== undefined) {
+                scaledPreset.emitter.offsetX = scaledPreset.emitter.offsetX * scale;
+            }
+            if (scaledPreset.emitter.offsetY !== undefined) {
+                scaledPreset.emitter.offsetY = scaledPreset.emitter.offsetY * scale;
+            }
         }
         
         // Scale liquid configuration

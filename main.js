@@ -362,6 +362,9 @@ class ParticleAccelerator {
         document.getElementById('particleCount').textContent = preset.particles.toLocaleString();
         document.getElementById('particleCountSlider').value = preset.particles;
         document.getElementById('particleCountValue').textContent = preset.particles.toLocaleString();
+
+        // Sync optional emitter controls UI with currently loaded preset
+        this.ui?.updateEmitterControls?.();
     }
 
     clearShapes() {

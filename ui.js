@@ -4,6 +4,8 @@ export class UIController {
         this.activePresetButton = null;
         this.currentPresetIndex = 0; // Track current preset
         this.setupEventListeners();
+        this.setupEmitterControls();
+        this.updateEmitterControls();
         // Build preset buttons last, after everything else is ready
         setTimeout(() => this.buildPresetButtons(), 0);
     }
@@ -50,6 +52,7 @@ export class UIController {
                 this.currentPreset = preset;
                 this.currentPresetIndex = index;
                 this.app.loadPreset(index);
+                this.updateEmitterControls();
                 this.showPresetDescription(preset, button);
                 
                 // Close mobile menu after selection
@@ -245,6 +248,87 @@ export class UIController {
         }
     }
 
+    setupEmitterControls() {
+        const bindSlider = (sliderId, valueId, formatter, onChange) => {
+            const slider = document.getElementById(sliderId);
+            const value = document.getElementById(valueId);
+            if (!slider || !value) return;
+
+            slider.addEventListener('input', (e) => {
+                const parsed = parseFloat(e.target.value);
+                value.textContent = formatter(parsed);
+                onChange(parsed);
+            });
+        };
+
+        bindSlider('emitterParticlesPerSecondSlider', 'emitterParticlesPerSecondValue', (v) => Math.round(v).toString(), (v) => {
+            if (this.app.simulation?.emitter) this.app.simulation.emitter.particlesPerSecond = Math.round(v);
+        });
+
+        bindSlider('emitterParticleSpeedSlider', 'emitterParticleSpeedValue', (v) => Math.round(v).toString(), (v) => {
+            if (this.app.simulation?.emitter) this.app.simulation.emitter.particleSpeed = v;
+        });
+
+        bindSlider('emitterRadiusSlider', 'emitterRadiusValue', (v) => Math.round(v).toString(), (v) => {
+            if (this.app.simulation?.emitter) this.app.simulation.emitter.radius = v;
+        });
+
+        bindSlider('emitterSpreadSlider', 'emitterSpreadValue', (v) => v.toFixed(2), (v) => {
+            if (this.app.simulation?.emitter) this.app.simulation.emitter.spread = v;
+        });
+
+        bindSlider('emitterOffsetXSlider', 'emitterOffsetXValue', (v) => Math.round(v).toString(), (v) => {
+            if (this.app.simulation?.emitter) this.app.simulation.emitter.offsetX = Math.round(v);
+        });
+
+        bindSlider('emitterOffsetYSlider', 'emitterOffsetYValue', (v) => Math.round(v).toString(), (v) => {
+            if (this.app.simulation?.emitter) this.app.simulation.emitter.offsetY = Math.round(v);
+        });
+
+        const thirdLawCheckbox = document.getElementById('emitterThirdLawCheckbox');
+        if (thirdLawCheckbox) {
+            thirdLawCheckbox.addEventListener('change', (e) => {
+                if (this.app.simulation?.emitter) {
+                    this.app.simulation.emitter.thirdLawForces = e.target.checked;
+                }
+            });
+        }
+    }
+
+    updateEmitterControls() {
+        const section = document.getElementById('emitterControlsSection');
+        const emitter = this.app.simulation?.emitter;
+        if (!section) return;
+
+        if (!emitter) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = '';
+
+        const setSlider = (sliderId, valueId, rawValue, formatter) => {
+            const slider = document.getElementById(sliderId);
+            const value = document.getElementById(valueId);
+            if (!slider || !value) return;
+            const resolved = rawValue ?? 0;
+            slider.value = resolved;
+            value.textContent = formatter(resolved);
+        };
+
+        setSlider('emitterParticlesPerSecondSlider', 'emitterParticlesPerSecondValue', emitter.particlesPerSecond, (v) => Math.round(v).toString());
+        setSlider('emitterParticleSpeedSlider', 'emitterParticleSpeedValue', emitter.particleSpeed, (v) => Math.round(v).toString());
+        setSlider('emitterRadiusSlider', 'emitterRadiusValue', emitter.radius, (v) => Math.round(v).toString());
+        setSlider('emitterSpreadSlider', 'emitterSpreadValue', emitter.spread, (v) => Number(v).toFixed(2));
+        setSlider('emitterOffsetXSlider', 'emitterOffsetXValue', emitter.offsetX, (v) => Math.round(v).toString());
+        setSlider('emitterOffsetYSlider', 'emitterOffsetYValue', emitter.offsetY, (v) => Math.round(v).toString());
+
+        const thirdLawCheckbox = document.getElementById('emitterThirdLawCheckbox');
+        if (thirdLawCheckbox) {
+            thirdLawCheckbox.checked = emitter.thirdLawForces !== false;
+        }
+    }
+
     reloadPresetWithParticleCount(newParticleCount) {
         // Get the current preset
         const preset = this.app.presetLoader.getPresetByIndex(this.currentPresetIndex);
@@ -266,6 +350,13 @@ export class UIController {
         if (modifiedPreset.liquid) {
             this.app.simulation.liquidConfig = modifiedPreset.liquid;
         }
+
+        // Set emitter before init so emitter pool modes initialize correctly
+        if (modifiedPreset.emitter) {
+            this.app.simulation.setEmitter({ ...modifiedPreset.emitter });
+        } else {
+            this.app.simulation.setEmitter(null);
+        }
         
         this.app.simulation.init(modifiedPreset.initType || 'center');
         
@@ -282,6 +373,8 @@ export class UIController {
         if (modifiedPreset.damping !== undefined) {
             this.app.simulation.damping = modifiedPreset.damping;
         }
+
+        this.updateEmitterControls();
         
         document.getElementById('particleCount').textContent = newParticleCount.toLocaleString();
     }

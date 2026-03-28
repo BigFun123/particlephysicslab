@@ -15,19 +15,32 @@
     {
         "name": "Entropy",
         "equation": "$$S = k \\cdot \\ln(\\Omega)$$",
-        "description": "Entropy is the stable state of the universe. But with no energy loss, matter can not exist.",
+        "description": "Entropy is the stable state of the universe. A single atom is more or less stable. Particle forces are equal in all directions.",
         "particles": 10000,
         "initType": "random",
         "speed": 1.5,
         "damping": 1.00,
-        "wrapEdges": true,
-        "shapes": [],
-        "glowIntensity": 6.0
-    },
+        "wrapEdges": true,        
+        "glowIntensity": 6.0,
+        "shapes": [
+            {
+                "type": "circle",
+                "x": 850,
+                "y": 400,
+                "radius": 120,
+                "moveable": true,
+                "absorb": true,
+                "mass": 100,
+                "vx": 0,
+                "vy": 0,
+                "color": "#ff1133"
+            }
+        ]
+    },    
     {
-        "name": "Gravity",
+        "name": "Gravity (Lilje)",
         "equation": "$$F = P \\cdot A \\qquad P = nkT \\qquad \\Delta P = \\text{shadow deficit}$$",
-        "description": "Any two objects have relatively fewer particles between them due to occlusion and absorbtion by the nucleus, causing gravitational attraction. The more particles, the stronger the gravity. P = n k T  . Karl Lilje 2016",
+        "description": "Any two objects have relatively fewer particles between them due to occlusion, causing gravitational attraction. The more particles, the stronger the gravity. P = n k T  . The key is virtual particles - particle 'bubbles' that burst on contact. Karl Lilje 2016",
         "particles": 75000,
         "initType": "random",
         "speed": 0.3,
@@ -63,6 +76,7 @@
             }
         ]
     },
+
     {
         "name": "Gravity Far",
         "equation": "$$F = P \\cdot A \\qquad P = nkT \\qquad \\Delta P = \\text{shadow deficit}$$",
@@ -108,9 +122,10 @@
         "description": "Smaller atoms are more attracted to larger, more dense ones. Objects have relatively fewer particles between them due to occlusion and absorbtion by the nucleus, causing gravitational attraction. The more particles, the stronger the gravity. P = n k T  . Karl Lilje 2016",
         "particles": 19000,
         "initType": "random",
-        "speed": 0.9,
+        "speed": 1.0,
         "particleSize": 2.0,
-        "damping": 0.9,
+        "wrapEdges": true,
+        "damping": 0.999,
         "showForceField": true,
         "shapes": [
             {
@@ -153,7 +168,7 @@
             {
                 "type": "circle",
                 "x": 600,
-                "y": 400,
+                "y": 500,
                 "radius": 50,
                 "moveable": true,
                 "absorb": true,
@@ -178,7 +193,7 @@
                 "type": "circle",
                 "x": 900,
                 "y": 700,
-                "radius": 50,
+                "radius": 80,
                 "moveable": true,
                 "absorb": true,
                 "mass": 200,
@@ -192,7 +207,7 @@
         "name": "Quantum Condensation",
         "equation": "$$\\psi(\\mathbf{r},t) = \\sum_n c_n \\phi_n(\\mathbf{r})\\, e^{-iE_n t/\\hbar}$$",
         "description": "From nothing, something. Particles condense into a stable state, a quantum condensation process. Matter.",
-        "particles": 100000,
+        "particles": 105000,
         "initType": "random",
         "damping": 0.25,
         "wrapEdges": true,
@@ -261,9 +276,9 @@
         }
     },
     {
-        "name": "Maze Challenge",
+        "name": "Global Illumination",
         "equation": "$$I = I_0 \\cdot T^n$$",
-        "description": "This shows how light can be emitted even when there is no direct path, as long as there are enough particles to create a path through the maze.",
+        "description": "This shows how even the darkest area can be illuminated even when there is no direct light path, as long as there are enough particles to find a path through the maze.",
         "particles": 20000,
         "initType": "left",
         "shapes": [
@@ -331,7 +346,7 @@
             "y": -1,
             "radius": 10,
             "particlesPerSecond": 5,
-            "maxParticles": 100,
+            "maxParticles": 1000,
             "particleSpeed": 150,
             "color": "#ff8800"
         },
@@ -346,92 +361,381 @@
     {
         "name": "Magnetic Fields",
         "equation": "$$\\nabla \\times \\mathbf{B} = \\mu_0 \\mathbf{J} \\qquad \\mathbf{F} = q\\mathbf{v} \\times \\mathbf{B}$$",
-        "description": "(WIP) Simulates magnetic fields and their interactions with ferromagnetic (aligned) metal 'crystals', like iron and cobalt. Particles tend to flow in one direction more than the other.",
+            "description": "(WIP) Simulates magnetic fields and their interactions with a magnetised ferromagnetic material. The rectangles act like monotonically aligned metal crystal whose preferred direction gradually increases from left to right, shaping the surrounding particle flow. It take some times for the fields to emerge.",
         "particles": 15000,
         "initType": "random",
         "wrapEdges": true,
         "particleSize": 3.0,
-        "speed": 1.6,
-        "damping": 0.99,
+        "speed": 1.1,
+        "damping": 0.69,
+        "collisions": false,
         "shapes": [
             {
                 "type": "circle",
                 "x": 200,
-                "y": 400,
+                "y": 460,
                 "radius": 20,
                 "moveable": true
             },
             {
                 "type": "rect",
-                "x": 500,
-                "y": 400,
-                "width": 400,
-                "height": 30,
-                "angle": 0.2618,
-                "color": "#ff1133"
+                "x": 280,
+                "y": 220,
+                "width": 90,
+                "height": 13,
+                "angle": -0.45,
+                "color": "#8a6f64"
             },
             {
                 "type": "rect",
-                "x": 500,
-                "y": 300,
-                "width": 400,
-                "height": 30,
-                "angle": 0.2618,
-                "color": "#ff1133"
+                "x": 280,
+                "y": 364.33,
+                "width": 90,
+                "height": 13,
+                "angle": -0.45,
+                "color": "#8a6f64"
             },
             {
                 "type": "rect",
-                "x": 500,
-                "y": 600,
-                "width": 400,
-                "height": 30,
-                "angle": -0.2618,
-                "color": "#ff1133"
+                "x": 280,
+                "y": 508.67,
+                "width": 90,
+                "height": 13,
+                "angle": -0.45,
+                "color": "#8a6f64"
             },
             {
                 "type": "rect",
-                "x": 500,
-                "y": 700,
-                "width": 400,
-                "height": 30,
-                "angle": -0.2618,
-                "color": "#ff1133"
+                "x": 280,
+                "y": 653,
+                "width": 90,
+                "height": 13,
+                "angle": -0.45,
+                "color": "#8a6f64"
             },
             {
                 "type": "rect",
-                "x": 1100,
-                "y": 300,
-                "width": 400,
-                "height": 30,
-                "angle": -0.2818,
-                "color": "#1111ff"
+                "x": 387.78,
+                "y": 220,
+                "width": 90,
+                "height": 13,
+                "angle": -0.3467,
+                "color": "#91766b"
             },
             {
                 "type": "rect",
-                "x": 1100,
-                "y": 400,
-                "width": 400,
-                "height": 30,
-                "angle": -0.2818,
-                "color": "#1111ff"
+                "x": 387.78,
+                "y": 364.33,
+                "width": 90,
+                "height": 13,
+                "angle": -0.3467,
+                "color": "#91766b"
             },
             {
                 "type": "rect",
-                "x": 1100,
-                "y": 600,
-                "width": 400,
-                "height": 30,
-                "angle": 0.2618,
-                "color": "#1111ff"
+                "x": 387.78,
+                "y": 508.67,
+                "width": 90,
+                "height": 13,
+                "angle": -0.3467,
+                "color": "#91766b"
             },
             {
                 "type": "rect",
-                "x": 1100,
-                "y": 700,
-                "width": 400,
-                "height": 30,
-                "angle": 0.2618,
-                "color": "#1111ff"
+                "x": 387.78,
+                "y": 653,
+                "width": 90,
+                "height": 13,
+                "angle": -0.3467,
+                "color": "#91766b"
+            },
+            {
+                "type": "rect",
+                "x": 495.56,
+                "y": 220,
+                "width": 90,
+                "height": 13,
+                "angle": -0.2433,
+                "color": "#997e72"
+            },
+            {
+                "type": "rect",
+                "x": 495.56,
+                "y": 364.33,
+                "width": 90,
+                "height": 13,
+                "angle": -0.2433,
+                "color": "#997e72"
+            },
+            {
+                "type": "rect",
+                "x": 495.56,
+                "y": 508.67,
+                "width": 90,
+                "height": 13,
+                "angle": -0.2433,
+                "color": "#997e72"
+            },
+            {
+                "type": "rect",
+                "x": 495.56,
+                "y": 653,
+                "width": 90,
+                "height": 13,
+                "angle": -0.2433,
+                "color": "#997e72"
+            },
+            {
+                "type": "rect",
+                "x": 603.33,
+                "y": 220,
+                "width": 90,
+                "height": 13,
+                "angle": -0.14,
+                "color": "#a18678"
+            },
+            {
+                "type": "rect",
+                "x": 603.33,
+                "y": 364.33,
+                "width": 90,
+                "height": 13,
+                "angle": -0.14,
+                "color": "#a18678"
+            },
+            {
+                "type": "rect",
+                "x": 603.33,
+                "y": 508.67,
+                "width": 90,
+                "height": 13,
+                "angle": -0.14,
+                "color": "#a18678"
+            },
+            {
+                "type": "rect",
+                "x": 603.33,
+                "y": 653,
+                "width": 90,
+                "height": 13,
+                "angle": -0.14,
+                "color": "#a18678"
+            },
+            {
+                "type": "rect",
+                "x": 711.11,
+                "y": 220,
+                "width": 90,
+                "height": 13,
+                "angle": -0.0367,
+                "color": "#aa8f7f"
+            },
+            {
+                "type": "rect",
+                "x": 711.11,
+                "y": 364.33,
+                "width": 90,
+                "height": 13,
+                "angle": -0.0367,
+                "color": "#aa8f7f"
+            },
+            {
+                "type": "rect",
+                "x": 711.11,
+                "y": 508.67,
+                "width": 90,
+                "height": 13,
+                "angle": -0.0367,
+                "color": "#aa8f7f"
+            },
+            {
+                "type": "rect",
+                "x": 711.11,
+                "y": 653,
+                "width": 90,
+                "height": 13,
+                "angle": -0.0367,
+                "color": "#aa8f7f"
+            },
+            {
+                "type": "rect",
+                "x": 818.89,
+                "y": 220,
+                "width": 90,
+                "height": 13,
+                "angle": 0.0667,
+                "color": "#b39a86"
+            },
+            {
+                "type": "rect",
+                "x": 818.89,
+                "y": 364.33,
+                "width": 90,
+                "height": 13,
+                "angle": 0.0667,
+                "color": "#b39a86"
+            },
+            {
+                "type": "rect",
+                "x": 818.89,
+                "y": 508.67,
+                "width": 90,
+                "height": 13,
+                "angle": 0.0667,
+                "color": "#b39a86"
+            },
+            {
+                "type": "rect",
+                "x": 818.89,
+                "y": 653,
+                "width": 90,
+                "height": 13,
+                "angle": 0.0667,
+                "color": "#b39a86"
+            },
+            {
+                "type": "rect",
+                "x": 926.67,
+                "y": 220,
+                "width": 90,
+                "height": 13,
+                "angle": 0.17,
+                "color": "#bea591"
+            },
+            {
+                "type": "rect",
+                "x": 926.67,
+                "y": 364.33,
+                "width": 90,
+                "height": 13,
+                "angle": 0.17,
+                "color": "#bea591"
+            },
+            {
+                "type": "rect",
+                "x": 926.67,
+                "y": 508.67,
+                "width": 90,
+                "height": 13,
+                "angle": 0.17,
+                "color": "#bea591"
+            },
+            {
+                "type": "rect",
+                "x": 926.67,
+                "y": 653,
+                "width": 90,
+                "height": 13,
+                "angle": 0.17,
+                "color": "#bea591"
+            },
+            {
+                "type": "rect",
+                "x": 1034.44,
+                "y": 220,
+                "width": 90,
+                "height": 13,
+                "angle": 0.2733,
+                "color": "#c8b19b"
+            },
+            {
+                "type": "rect",
+                "x": 1034.44,
+                "y": 364.33,
+                "width": 90,
+                "height": 13,
+                "angle": 0.2733,
+                "color": "#c8b19b"
+            },
+            {
+                "type": "rect",
+                "x": 1034.44,
+                "y": 508.67,
+                "width": 90,
+                "height": 13,
+                "angle": 0.2733,
+                "color": "#c8b19b"
+            },
+            {
+                "type": "rect",
+                "x": 1034.44,
+                "y": 653,
+                "width": 90,
+                "height": 13,
+                "angle": 0.2733,
+                "color": "#c8b19b"
+            },
+            {
+                "type": "rect",
+                "x": 1142.22,
+                "y": 220,
+                "width": 90,
+                "height": 13,
+                "angle": 0.3767,
+                "color": "#d3bda6"
+            },
+            {
+                "type": "rect",
+                "x": 1142.22,
+                "y": 364.33,
+                "width": 90,
+                "height": 13,
+                "angle": 0.3767,
+                "color": "#d3bda6"
+            },
+            {
+                "type": "rect",
+                "x": 1142.22,
+                "y": 508.67,
+                "width": 90,
+                "height": 13,
+                "angle": 0.3767,
+                "color": "#d3bda6"
+            },
+            {
+                "type": "rect",
+                "x": 1142.22,
+                "y": 653,
+                "width": 90,
+                "height": 13,
+                "angle": 0.3767,
+                "color": "#d3bda6"
+            },
+            {
+                "type": "rect",
+                "x": 1250,
+                "y": 220,
+                "width": 90,
+                "height": 13,
+                "angle": 0.48,
+                "color": "#dcc9b2"
+            },
+            {
+                "type": "rect",
+                "x": 1250,
+                "y": 364.33,
+                "width": 90,
+                "height": 13,
+                "angle": 0.48,
+                "color": "#dcc9b2"
+            },
+            {
+                "type": "rect",
+                "x": 1250,
+                "y": 508.67,
+                "width": 90,
+                "height": 13,
+                "angle": 0.48,
+                "color": "#dcc9b2"
+            },
+            {
+                "type": "rect",
+                "x": 1250,
+                "y": 653,
+                "width": 90,
+                "height": 13,
+                "angle": 0.48,
+                "color": "#dcc9b2"
             }
         ]
     },
@@ -1241,6 +1545,7 @@
                 "y": 400,
                 "radius": 60,
                 "moveable": true,
+                "absorb": true,
                 "mass": 150,
                 "vx": 100,
                 "vy": 0,
@@ -1253,6 +1558,7 @@
                 "y": 100,
                 "radius": 20,
                 "moveable": true,
+                "absorb": true,
                 "mass": 50,
                 "vx": 100,
                 "vy": 0,
@@ -1270,6 +1576,153 @@
                     "x": 4.5,
                     "y": 0
                 }
+            }
+        ]
+    }
+    ,
+    {
+        "name": "Rocket Engine (Newtonian)",
+        "equation": "$$\\mathbf{F} = \\dot{m}\\,v_e \\qquad \\mathbf{F}_{\\text{thrust}} = -\\mathbf{F}_{\\text{reaction}}$$",
+        "description": "(Contrived animation) Newton's Third Law in action. Mass is ejected backward at high speed from the rocket engine nozzle, and by conservation of momentum the rocket accelerates forward through the particle medium. The bright orange exhaust plume is the reaction mass — F = ṁvₑ.",
+        "particles": 10000,
+        "initType": "random",
+        "speed": 1.0,
+        "particleSize": 5.0,
+        "damping": 0.99,
+        "wrapEdges": true,
+        "showForceField": true,
+        "particleCollisions": false,
+        "glowIntensity": 1.0,
+        "emitter": {
+            "attachToShape": 0,
+            "emitterStartIndex": 8000,
+            "maxParticles": 1000,
+            "offsetX": -60,
+            "offsetY": 0,
+            "x": 400,
+            "y": 540,
+            "radius": 15,
+            "particlesPerSecond": 300,
+            "particleSpeed": 180,
+            "direction": {
+                "x": -1,
+                "y": 0
+            },
+            "spread": 0.3,
+            "color": "#ff6611"
+        },
+        "shapes": [
+            {
+                "type": "circle",
+                "x": 400,
+                "y": 540,
+                "radius": 45,
+                "moveable": true,
+                "absorb": false,
+                "mass": 1000,
+                "vx": 0,
+                "vy": 0,
+                "color": "#2255aa",
+                "label": "Rocket",
+                "wrapEdges": true
+            }
+        ]
+    }
+    ,
+    {
+        "name": "Rocket Engine (Lilje)",
+        "equation": "$$P = nkT \\qquad \\mathbf{F}_{\\text{thrust}} \\propto \\Delta P \\cdot A$$",
+        "description": "Explains WHY Rocket propulsion happens through particle pressure. Simulates the importance of nozzle design to avoid particle vacuum and collapse. The rocket movement is emergent from particle interaction.",
+        "particles": 75000,
+        "initType": "static",
+        "speed": 6.15,
+        "particleSize": 4.5,
+        "damping": 0.999,
+        "wrapEdges": true,
+        "showForceField": true,
+        "particleCollisions": true,
+        "glowIntensity": 1.0,
+        "emitter": {
+            "attachToShape": 0,
+            "emitterStartIndex": 60000,
+            "x": 400,
+            "y": 540,
+            "offsetX": -50,
+            "offsetY": 0,
+            "radius": 12,
+            "particlesPerSecond": 450,
+            "maxParticles": 5000,
+            "particleSpeed": 20,
+            "direction": {
+                "x": -1,
+                "y": 0
+            },
+            "spread": 0.001,
+            "color": "#ff8844",
+            "thirdLawForces": false
+        },
+        "shapes": [
+            {
+                "type": "circle",
+                "x": 400,
+                "y": 540,
+                "radius": 50,
+                "moveable": true,
+                "absorb": false,
+                "mass": 800,
+                "vx": 0,
+                "vy": 0.01,
+                "color": "#1166cc",
+                "label": "Rocket",
+                "opacity": 0.7
+            },
+            {
+                "type": "rect",
+                "x": 320,
+                "y": 400,
+                "width": 20,
+                "height": 230,
+                "angle": 0,
+                "color": "#1111ff"
+            }
+        ]
+    },
+    {
+        "name": "Gravity (Le Sage)",
+        "equation": "$$F = P \\cdot A \\qquad P = nkT \\qquad \\Delta P = \\text{shadow deficit}$$",
+        "description": "Le Sage postulated that gravity is caused by the repulsion of atom by the nucleus. Le Sage 1748. However particle simulation proves no emergent gravitational phenomenon.",
+        "particles": 75000,
+        "initType": "random",
+        "speed": 0.3,
+        "particleSize": 3.5,
+        "damping": 1.00,
+        "wrapEdges": true,
+        "showForceField": true,
+        "particleCollisions": false,
+        "shapes": [
+            {
+                "type": "circle",
+                "x": 550,
+                "y": 400,
+                "radius": 120,
+                "moveable": true,
+                "absorb": false,
+                "mass": 100,
+                "vx": 0,
+                "vy": 0,
+                "color": "#111133"
+            },
+            {
+                "type": "circle",
+                "x": 900,
+                "y": 400,
+                "radius": 120,
+                "moveable": true,
+                "absorb": false,
+                "mass": 100,
+                "vx": 0,
+                "vy": 0,
+                "color": "#113311"
             }
         ]
     }

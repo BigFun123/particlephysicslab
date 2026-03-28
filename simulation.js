@@ -46,8 +46,8 @@ export class ParticleSimulation {
     }
 
     init(initType = 'center') {
-        // If emitter is managing particles, allocate arrays but skip initialization
-        if (this.emitter && this.emitter.maxParticles) {
+        // If emitter is managing particles in standalone mode (no emitterStartIndex), skip normal init
+        if (this.emitter && this.emitter.maxParticles && this.emitter.emitterStartIndex === undefined) {
             // Allocate arrays if not already allocated
             if (!this.positions) {
                 this.positions = new Float32Array(this.particleCount * 2);
@@ -76,6 +76,21 @@ export class ParticleSimulation {
         
         if (this.sensors.length > 0) {
             this.initSensors();
+        }
+
+        // If emitter uses emitterStartIndex, clear its pool range off-screen and prime activeParticles
+        if (this.emitter && this.emitter.maxParticles && this.emitter.emitterStartIndex !== undefined) {
+            const poolStart = this.emitter.emitterStartIndex;
+            const poolSize = this.emitter.maxParticles;
+            const poolEnd = Math.min(poolStart + poolSize, this.particleCount);
+            for (let i = poolStart; i < poolEnd; i++) {
+                this.positions[i * 2] = -1000;
+                this.positions[i * 2 + 1] = -1000;
+                this.velocities[i * 2] = 0;
+                this.velocities[i * 2 + 1] = 0;
+            }
+            this.activeParticles = poolStart;
+            this.nextParticleIndex = 0;
         }
         
         this.initCirclePhysics();
@@ -1217,8 +1232,8 @@ export class ParticleSimulation {
         this.emitter = emitter;
         this.emitterAccumulator = 0;
         
-        // If emitter is set, initialize with max particles
-        if (emitter && emitter.maxParticles) {
+        // Standalone emitter (no emitterStartIndex): manages its own particle pool
+        if (emitter && emitter.maxParticles && emitter.emitterStartIndex === undefined) {
             this.particleCount = emitter.maxParticles;
             this.positions = new Float32Array(this.particleCount * 2);
             this.velocities = new Float32Array(this.particleCount * 2);
@@ -1232,10 +1247,20 @@ export class ParticleSimulation {
                 this.velocities[i * 2 + 1] = 0;
             }
         }
+        // emitterStartIndex mode: normal init runs; pool is cleared after init()
     }
 
     updateEmitter(dt) {
         if (!this.emitter || !this.emitter.particlesPerSecond) return;
+
+        // If attached to a shape, follow its position each frame
+        if (this.emitter.attachToShape !== undefined) {
+            const shape = this.shapes[this.emitter.attachToShape];
+            if (shape) {
+                this.emitter.x = shape.x + (this.emitter.offsetX || 0);
+                this.emitter.y = shape.y + (this.emitter.offsetY || 0);
+            }
+        }
         
         // Accumulate time for particle emission
         this.emitterAccumulator += dt;
@@ -1248,16 +1273,26 @@ export class ParticleSimulation {
             particlesToEmit++;
             this.emitterAccumulator -= emitInterval;
         }
+
+        // Determine pool bounds (standalone: starts at 0; emitterStartIndex mode: starts at index)
+        const poolStart = this.emitter.emitterStartIndex !== undefined ? this.emitter.emitterStartIndex : 0;
+        const poolSize = this.emitter.maxParticles;
         
         // Emit particles
         for (let i = 0; i < particlesToEmit; i++) {
-            // Check if we've reached max particles
-            if (this.emitter.maxParticles && this.activeParticles >= this.emitter.maxParticles) {
-                // Reuse particles in round-robin fashion
-                this.emitParticle(this.nextParticleIndex);
-                this.nextParticleIndex = (this.nextParticleIndex + 1) % this.emitter.maxParticles;
+            if (poolSize) {
+                const localActive = this.activeParticles - poolStart;
+                if (localActive >= poolSize) {
+                    // Reuse particles in round-robin fashion within pool
+                    this.emitParticle(poolStart + this.nextParticleIndex);
+                    this.nextParticleIndex = (this.nextParticleIndex + 1) % poolSize;
+                } else if (this.activeParticles < this.particleCount) {
+                    // Activate next particle in pool
+                    this.emitParticle(this.activeParticles);
+                    this.activeParticles++;
+                }
             } else if (this.activeParticles < this.particleCount) {
-                // Emit new particle
+                // No maxParticles: emit from activeParticles sequentially
                 this.emitParticle(this.activeParticles);
                 this.activeParticles++;
             }
@@ -1305,6 +1340,18 @@ export class ParticleSimulation {
             const speed = this.emitter.particleSpeed * (0.8 + Math.random() * 0.4);
             this.velocities[idx] = Math.cos(angle) * speed;
             this.velocities[idx + 1] = Math.sin(angle) * speed;
+        }
+
+        // Newton's 3rd Law: if enabled and attached to a shape, apply equal and opposite
+        // reaction momentum to that shape (rocket thrust)
+        // this is for illustration purposes only and not part of particle physics
+        if (this.emitter.thirdLawForces !== false && this.emitter.attachToShape !== undefined) {
+            const shape = this.shapes[this.emitter.attachToShape];
+            if (shape && shape.moveable) {
+                const shapeMass = shape.mass || 1000;
+                shape.vx -= this.velocities[idx] / shapeMass;
+                shape.vy -= this.velocities[idx + 1] / shapeMass;
+            }
         }
     }
 

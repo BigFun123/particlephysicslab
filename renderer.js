@@ -413,10 +413,12 @@ render(positions, velocities, shapes = [], sensors = [], sensorHits = [], forceF
             // Skip hidden shapes
             if (shape.hidden) return;
             
+            const opacity = shape.opacity !== undefined ? shape.opacity : 0.5;
+            
             if (shape.type === 'rect') {
-                this.drawRect(shape.x, shape.y, shape.width, shape.height, shape.angle || 0, shape.color || '#4d4d66');
+                this.drawRect(shape.x, shape.y, shape.width, shape.height, shape.angle || 0, shape.color || '#4d4d66', opacity);
             } else if (shape.type === 'circle') {
-                this.drawCircle(shape.x, shape.y, shape.radius, shape.color || '#ffffff');
+                this.drawCircle(shape.x, shape.y, shape.radius, shape.color || '#ffffff', opacity);
                 if (shape.moveable && (shape.vx !== undefined || shape.vy !== undefined)) {
                     this.drawVelocityArrow(shape.x, shape.y, shape.vx || 0, shape.vy || 0, shape.radius);
                 }
@@ -429,7 +431,7 @@ render(positions, velocities, shapes = [], sensors = [], sensorHits = [], forceF
         });
     }
 
-    drawCircle(x, y, radius, color) {
+    drawCircle(x, y, radius, color, opacity = 0.5) {
         const gl = this.gl;
         const dpr = window.devicePixelRatio || 1;
 
@@ -449,10 +451,11 @@ render(positions, velocities, shapes = [], sensors = [], sensorHits = [], forceF
             const fragmentShader = this.createShader(gl.FRAGMENT_SHADER, `#version 300 es
                 precision highp float;
                 uniform vec3 u_color;
+                uniform float u_opacity;
                 out vec4 fragColor;
                 
                 void main() {
-                    fragColor = vec4(u_color, 0.5);
+                    fragColor = vec4(u_color, u_opacity);
                 }
             `);
 
@@ -491,6 +494,10 @@ render(positions, velocities, shapes = [], sensors = [], sensorHits = [], forceF
         const colorLoc = gl.getUniformLocation(this.circleProgram, 'u_color');
         const rgb = this.hexToRgb(color);
         gl.uniform3f(colorLoc, rgb.r, rgb.g, rgb.b);
+        
+        // Set opacity uniform
+        const opacityLoc = gl.getUniformLocation(this.circleProgram, 'u_opacity');
+        gl.uniform1f(opacityLoc, opacity);
 
         gl.drawArrays(gl.TRIANGLE_FAN, 0, vertices.length / 2);
     }
@@ -504,7 +511,7 @@ render(positions, velocities, shapes = [], sensors = [], sensorHits = [], forceF
         } : { r: 1, g: 1, b: 1 };
     }
 
-    drawRect(x, y, width, height, angle = 0, color = '#4d4d66') {
+    drawRect(x, y, width, height, angle = 0, color = '#4d4d66', opacity = 0.5) {
         const gl = this.gl;
         const dpr = window.devicePixelRatio || 1;
 
@@ -536,10 +543,11 @@ render(positions, velocities, shapes = [], sensors = [], sensorHits = [], forceF
             const fragmentShader = this.createShader(gl.FRAGMENT_SHADER, `#version 300 es
                 precision highp float;
                 uniform vec3 u_color;
+                uniform float u_opacity;
                 out vec4 fragColor;
                 
                 void main() {
-                    fragColor = vec4(u_color, 0.5);
+                    fragColor = vec4(u_color, u_opacity);
                 }
             `);
 
@@ -588,6 +596,10 @@ render(positions, velocities, shapes = [], sensors = [], sensorHits = [], forceF
         const colorLoc = gl.getUniformLocation(this.rectProgram, 'u_color');
         const rgb = this.hexToRgb(color);
         gl.uniform3f(colorLoc, rgb.r, rgb.g, rgb.b);
+        
+        // Set opacity uniform
+        const opacityLoc = gl.getUniformLocation(this.rectProgram, 'u_opacity');
+        gl.uniform1f(opacityLoc, opacity);
 
         gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
