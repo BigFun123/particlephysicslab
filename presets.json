@@ -2,26 +2,27 @@
     {
         "name": "The Higgs Field",
         "equation": "$$E = mc^2 \\quad \\varphi \\rightarrow \\varphi + \\delta\\varphi$$",
-        "description": "A slowly cooling universe. The universe is not empty, it is filled with a field that gives particles mass. The more particles, the stronger the field. Force field shows that as the field cools, it loses energy.",
+        "description": "Space is not empty, it is filled with a field of moving particles. The more particles, the stronger the field. In this context particle density is called mass.",
         "particles": 1000,
         "initType": "random",
         "speed": 1.5,
         "damping": 0.99,
-        "showForceField": true,
+        "showForceField": false,
         "wrapEdges": true,
         "shapes": [],
-        "glowIntensity": 12.0
+        "glowIntensity": 12.0,
+        "showParticleDensity": false
     },
     {
         "name": "Entropy",
         "equation": "$$S = k \\cdot \\ln(\\Omega)$$",
-        "description": "Entropy is the stable state of the universe. A single atom is more or less stable. Particle forces are equal in all directions.",
+        "description": "Entropy is the stable state of the universe. A single atom is more or less stable. Particle forces are equal in all directions. Click near the circle to create a vacuum. Select Show Particle Density to toggle the particle density to see the vacuuum (bending of 'space-time') around an atom.",
         "particles": 10000,
         "initType": "random",
         "speed": 1.5,
         "damping": 1.00,
         "wrapEdges": true,        
-        "glowIntensity": 6.0,
+        "glowIntensity": 2.0,
         "shapes": [
             {
                 "type": "circle",
@@ -35,19 +36,20 @@
                 "vy": 0,
                 "color": "#ff1133"
             }
-        ]
+        ],
+        "showParticleDensity": true
     },    
     {
         "name": "Gravity (Lilje)",
         "equation": "$$F = P \\cdot A \\qquad P = nkT \\qquad \\Delta P = \\text{shadow deficit}$$",
         "description": "Any two objects have relatively fewer particles between them due to occlusion, causing gravitational attraction. The more particles, the stronger the gravity. P = n k T  . The key is virtual particles - particle 'bubbles' that burst on contact. Karl Lilje 2016",
-        "particles": 75000,
+        "particles": 35000,
         "initType": "random",
         "speed": 0.3,
         "particleSize": 3.5,
         "damping": 1.00,
         "wrapEdges": true,
-        "showForceField": true,
+        "showForceField": false,
         "particleCollisions": false,
         "shapes": [
             {
@@ -74,7 +76,8 @@
                 "vy": 0,
                 "color": "#113311"
             }
-        ]
+        ],
+        "showParticleDensity": true
     },
 
     {
@@ -114,7 +117,8 @@
                 "vy": 0,
                 "color": "#113311"
             }
-        ]
+        ],
+        "showParticleDensity": true
     },
     {
         "name": "Gravity 2",
@@ -152,7 +156,8 @@
                 "vy": 0,
                 "color": "#003300"
             }
-        ]
+        ],
+        "showParticleDensity": true
     },
     {
         "name": "Gravity 3",
@@ -201,18 +206,20 @@
                 "vy": 0,
                 "color": "#330000"
             }
-        ]
+        ],
+        "showParticleDensity": true
     },
     {
         "name": "Quantum Condensation",
         "equation": "$$\\psi(\\mathbf{r},t) = \\sum_n c_n \\phi_n(\\mathbf{r})\\, e^{-iE_n t/\\hbar}$$",
         "description": "From nothing, something. Particles condense into a stable state, a quantum condensation process. Matter.",
-        "particles": 105000,
+        "particles": 36850,
         "initType": "random",
-        "damping": 0.25,
+        "damping": 0.001,
         "wrapEdges": true,
         "shapes": [],
-        "glowIntensity": 3.0
+        "glowIntensity": 3.0,
+        "showParticleDensity": false
     },
     {
         "name": "Flame Simulation",
@@ -221,7 +228,8 @@
         "particles": 10000,
         "initType": "center",
         "showForceField": true,
-        "shapes": []
+        "shapes": [],
+        "showParticleDensity": false
     },
     {
         "name": "Double Slit Experiment",
@@ -273,7 +281,8 @@
             "y": 0,
             "width": 20,
             "height": 1000
-        }
+        },
+        "showParticleDensity": false
     },
     {
         "name": "Global Illumination",
@@ -281,6 +290,7 @@
         "description": "This shows how even the darkest area can be illuminated even when there is no direct light path, as long as there are enough particles to find a path through the maze.",
         "particles": 20000,
         "initType": "left",
+        "damping": 0.999,
         "shapes": [
             {
                 "type": "rect",
@@ -294,7 +304,7 @@
                 "x": 300,
                 "y": 500,
                 "width": 30,
-                "height": 400
+                "height": 600
             },
             {
                 "type": "rect",
@@ -331,7 +341,8 @@
             "y": 0,
             "width": 80,
             "height": 1000
-        }
+        },
+        "showParticleDensity": false
     },
     {
         "name": "Cloud Chamber",
@@ -356,12 +367,13 @@
             "y": -1,
             "width": 500,
             "height": 500
-        }
+        },
+        "showParticleDensity": false
     },
     {
         "name": "Magnetic Fields",
         "equation": "$$\\nabla \\times \\mathbf{B} = \\mu_0 \\mathbf{J} \\qquad \\mathbf{F} = q\\mathbf{v} \\times \\mathbf{B}$$",
-            "description": "(WIP) Simulates magnetic fields and their interactions with a magnetised ferromagnetic material. The rectangles act like monotonically aligned metal crystal whose preferred direction gradually increases from left to right, shaping the surrounding particle flow. It take some times for the fields to emerge.",
+            "description": "(WIP) Simulates magnetic fields and their interactions with a magnetised ferromagnetic material. The rectangles act like monotonically aligned metal crystal whose preferred direction gradually increases along the construct, shaping the surrounding particle flow. It take some time for the fields to emerge.",
         "particles": 15000,
         "initType": "random",
         "wrapEdges": true,
@@ -737,7 +749,8 @@
                 "angle": 0.48,
                 "color": "#dcc9b2"
             }
-        ]
+        ],
+        "showParticleDensity": false
     },
     {
         "name": "Photon Generation",
@@ -760,7 +773,8 @@
                 "rotating": true,
                 "rotationSpeed": 0.3
             }
-        ]
+        ],
+        "showParticleDensity": false
     },
     {
         "name": "Photon Waves",
@@ -788,7 +802,8 @@
                 "constantSpeed": 150.0,
                 "color": "#002244"
             }
-        ]
+        ],
+        "showParticleDensity": false
     },
     {
         "name": "Solar System",
@@ -936,7 +951,8 @@
                 "color": "#4166F5",
                 "label": "Neptune"
             }
-        ]
+        ],
+        "showParticleDensity": false
     },
     {
         "name": "Linear Accelerator",
@@ -1090,7 +1106,8 @@
                 "width": 80,
                 "height": 700
             }
-        ]
+        ],
+        "showParticleDensity": false
     },
     {
         "name": "Particle Accelerator",
@@ -1464,7 +1481,8 @@
                 },
                 "color": "#ff3333"
             }
-        ]
+        ],
+        "showParticleDensity": false
     },
     {
         "name": "Quantum Liquid",
@@ -1525,12 +1543,13 @@
                 "width": 300,
                 "height": 30
             }
-        ]
+        ],
+        "showParticleDensity": false
     },
     {
         "name": "Wormhole",
         "equation": "$$ds^2 = -c^2dt^2 + dl^2 + (b^2 + l^2)(d\\theta^2 + \\sin^2\\theta d\\phi^2)$$",
-        "description": "A circle travels left to right through space. When it enters the hidden wormhole zone (center rectangle), it experiences reduced resistance and can travel at higher speeds, simulating faster-than-light travel through warped spacetime.",
+        "description": "An atom travels through space. When it enters the hidden wormhole zone (center rectangle), it experiences reduced resistance and can travel at higher speeds, simulating faster-than-light travel through warped spacetime.",
         "particles": 12000,
         "initType": "random",
         "speed": 1.0,
@@ -1577,7 +1596,8 @@
                     "y": 0
                 }
             }
-        ]
+        ],
+        "showParticleDensity": false
     }
     ,
     {
@@ -1626,7 +1646,8 @@
                 "label": "Rocket",
                 "wrapEdges": true
             }
-        ]
+        ],
+        "showParticleDensity": false
     }
     ,
     {
@@ -1641,6 +1662,7 @@
         "wrapEdges": true,
         "showForceField": true,
         "particleCollisions": true,
+        "showParticleDensity": true,
         "glowIntensity": 1.0,
         "emitter": {
             "attachToShape": 0,
@@ -1690,7 +1712,7 @@
     {
         "name": "Gravity (Le Sage)",
         "equation": "$$F = P \\cdot A \\qquad P = nkT \\qquad \\Delta P = \\text{shadow deficit}$$",
-        "description": "Le Sage postulated that gravity is caused by the repulsion of atom by the nucleus. Le Sage 1748. However particle simulation proves no emergent gravitational phenomenon.",
+        "description": "Le Sage postulated that gravity is caused by the repulsion of atoms by the nucleus. (Le Sage 1748). However particle simulation proves no significant emergent gravitational phenomenon.",
         "particles": 75000,
         "initType": "random",
         "speed": 0.3,
@@ -1724,6 +1746,60 @@
                 "vy": 0,
                 "color": "#113311"
             }
-        ]
+        ],
+        "showParticleDensity": true
+    },
+    {
+        "name": "AntiGravity",
+        "equation": "$$ds^2 = -c^2dt^2 + dl^2 + (b^2 + l^2)(d\\theta^2 + \\sin^2\\theta d\\phi^2)$$",
+        "description": "Lowering the density of the particle field by evacuating particles causes objects to move toward the lower density area.",
+        "particles": 12000,
+        "initType": "random",
+        "speed": 1.0,
+        "particleSize": 2.0,
+        "damping": 0.88,
+        "wrapEdges": true,
+        "showForceField": false,
+        "shapes": [
+            {
+                "type": "circle",
+                "x": 500,
+                "y": 500,
+                "radius": 60,
+                "moveable": true,
+                "absorb": true,
+                "mass": 150,
+                "vx": 0,
+                "vy": 0,
+                "color": "#4488ff",
+                "wrapEdges": true
+            },
+            {
+                "type": "circle",
+                "x": 700,
+                "y": 500,
+                "radius": 20,
+                "moveable": true,
+                "absorb": true,
+                "mass": 50,
+                "vx": 0,
+                "vy": 0,
+                "color": "#4488ff",
+                "wrapEdges": true
+            },
+            {
+                "type": "rect",
+                "x": 300,
+                "y": 200,
+                "width": 620,
+                "height": 200,
+                "hidden": false,
+                "accelerate": {
+                    "x": 0,
+                    "y": -1
+                }
+            }
+        ],
+        "showParticleDensity": false
     }
 ]

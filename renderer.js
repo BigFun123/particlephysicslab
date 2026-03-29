@@ -130,7 +130,7 @@ export class ParticleRenderer {
 
         return program;
     }
-render(positions, velocities, shapes = [], sensors = [], sensorHits = [], forceField = null, forceFieldWidth = 0, forceFieldHeight = 0, forceFieldResolution = 20, emitter = null) {
+render(positions, velocities, shapes = [], sensors = [], sensorHits = [], forceField = null, forceFieldWidth = 0, forceFieldHeight = 0, forceFieldResolution = 20, particleDensity = null, particleDensityWidth = 0, particleDensityHeight = 0, emitter = null) {
     const gl = this.gl;
 
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -138,6 +138,11 @@ render(positions, velocities, shapes = [], sensors = [], sensorHits = [], forceF
     // Draw force field first (as backdrop)
     if (forceField && forceField.length > 0) {
         this.drawForceField(forceField, forceFieldWidth, forceFieldHeight, forceFieldResolution);
+    }
+
+    // Draw density overlay when enabled
+    if (particleDensity && particleDensity.length > 0) {
+        this.drawParticleDensity(particleDensity, particleDensityWidth, particleDensityHeight, forceFieldResolution);
     }
     
     // Draw emitter
@@ -290,6 +295,106 @@ render(positions, velocities, shapes = [], sensors = [], sensorHits = [], forceF
         gl.vertexAttribPointer(forceLoc, 1, gl.FLOAT, false, 0, 0);
 
         const resLoc = gl.getUniformLocation(this.forceFieldProgram, 'u_resolution');
+        gl.uniform2f(resLoc, this.canvas.width, this.canvas.height);
+
+        gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 2);
+    }
+
+    drawParticleDensity(particleDensity, width, height, resolution) {
+        const gl = this.gl;
+        const dpr = window.devicePixelRatio || 1;
+
+        if (!this.densityProgram) {
+            const vertexShader = this.createShader(gl.VERTEX_SHADER, `#version 300 es
+                precision highp float;
+                in vec2 a_position;
+                in float a_density;
+                uniform vec2 u_resolution;
+                out float v_density;
+
+                void main() {
+                    vec2 clipSpace = (a_position / u_resolution) * 2.0 - 1.0;
+                    gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+                    v_density = a_density;
+                }
+            `);
+
+            const fragmentShader = this.createShader(gl.FRAGMENT_SHADER, `#version 300 es
+                precision highp float;
+                in float v_density;
+                out vec4 fragColor;
+
+                void main() {
+                    float intensity = clamp(log(1.0 + v_density) / log(30.0), 0.0, 1.0);
+
+                    vec3 color;
+                    if (intensity < 0.33) {
+                        float t = intensity / 0.33;
+                        color = mix(vec3(0.0, 0.0, 0.0), vec3(0.1, 0.2, 0.8), t);
+                    } else if (intensity < 0.66) {
+                        float t = (intensity - 0.33) / 0.33;
+                        color = mix(vec3(0.1, 0.2, 0.8), vec3(0.2, 0.9, 0.4), t);
+                    } else {
+                        float t = (intensity - 0.66) / 0.34;
+                        color = mix(vec3(0.2, 0.9, 0.4), vec3(1.0, 0.9, 0.1), t);
+                    }
+
+                    fragColor = vec4(color, 0.55);
+                }
+            `);
+
+            this.densityProgram = gl.createProgram();
+            gl.attachShader(this.densityProgram, vertexShader);
+            gl.attachShader(this.densityProgram, fragmentShader);
+            gl.linkProgram(this.densityProgram);
+
+            this.densityPositionBuffer = gl.createBuffer();
+            this.densityValueBuffer = gl.createBuffer();
+        }
+
+        gl.useProgram(this.densityProgram);
+
+        const vertices = [];
+        const densityValues = [];
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const px = x * resolution * dpr;
+                const py = y * resolution * dpr;
+                const pw = resolution * dpr;
+                const ph = resolution * dpr;
+
+                const index = y * width + x;
+                const density = particleDensity[index] || 0;
+
+                vertices.push(
+                    px, py,
+                    px + pw, py,
+                    px, py + ph,
+                    px, py + ph,
+                    px + pw, py,
+                    px + pw, py + ph
+                );
+
+                for (let i = 0; i < 6; i++) {
+                    densityValues.push(density);
+                }
+            }
+        }
+
+        const posLoc = gl.getAttribLocation(this.densityProgram, 'a_position');
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.densityPositionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.DYNAMIC_DRAW);
+        gl.enableVertexAttribArray(posLoc);
+        gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+        const densityLoc = gl.getAttribLocation(this.densityProgram, 'a_density');
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.densityValueBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(densityValues), gl.DYNAMIC_DRAW);
+        gl.enableVertexAttribArray(densityLoc);
+        gl.vertexAttribPointer(densityLoc, 1, gl.FLOAT, false, 0, 0);
+
+        const resLoc = gl.getUniformLocation(this.densityProgram, 'u_resolution');
         gl.uniform2f(resLoc, this.canvas.width, this.canvas.height);
 
         gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 2);

@@ -28,6 +28,12 @@ export class ParticleSimulation {
         this.forceField = null;
         this.forceFieldWidth = 0;
         this.forceFieldHeight = 0;
+
+        // Particle density visualization
+        this.showParticleDensity = false;
+        this.particleDensity = null;
+        this.particleDensityWidth = 0;
+        this.particleDensityHeight = 0;
         
         // Particle emitter
         this.emitter = null;
@@ -95,6 +101,7 @@ export class ParticleSimulation {
         
         this.initCirclePhysics();
         this.initForceField();
+        this.initParticleDensity();
     }
 
     initCirclePhysics() {
@@ -134,6 +141,16 @@ export class ParticleSimulation {
         
         this.forceField = new Float32Array(this.forceFieldWidth * this.forceFieldHeight);
         this.forceField.fill(0);
+    }
+
+    initParticleDensity() {
+        if (!this.showParticleDensity) return;
+
+        this.particleDensityWidth = Math.ceil(this.bounds.width / this.forceFieldResolution);
+        this.particleDensityHeight = Math.ceil(this.bounds.height / this.forceFieldResolution);
+
+        this.particleDensity = new Float32Array(this.particleDensityWidth * this.particleDensityHeight);
+        this.particleDensity.fill(0);
     }
 
     isPointInShape(x, y, shape) {
@@ -328,6 +345,10 @@ export class ParticleSimulation {
         
         if (this.showForceField) {
             this.updateForceField();
+        }
+
+        if (this.showParticleDensity) {
+            this.updateParticleDensity();
         }
         
         // Update liquid simulation if enabled
@@ -1214,6 +1235,56 @@ export class ParticleSimulation {
         this.forceField = smoothed;
     }
 
+    updateParticleDensity() {
+        if (!this.particleDensity) {
+            this.initParticleDensity();
+            if (!this.particleDensity) return;
+        }
+
+        this.particleDensity.fill(0);
+
+        for (let i = 0; i < this.particleCount; i++) {
+            const x = this.positions[i * 2];
+            const y = this.positions[i * 2 + 1];
+
+            const cellX = Math.floor(x / this.forceFieldResolution);
+            const cellY = Math.floor(y / this.forceFieldResolution);
+
+            if (cellX >= 0 && cellX < this.particleDensityWidth &&
+                cellY >= 0 && cellY < this.particleDensityHeight) {
+                const index = cellY * this.particleDensityWidth + cellX;
+                this.particleDensity[index] += 1;
+            }
+        }
+
+        const smoothed = new Float32Array(this.particleDensity.length);
+        for (let y = 0; y < this.particleDensityHeight; y++) {
+            for (let x = 0; x < this.particleDensityWidth; x++) {
+                const index = y * this.particleDensityWidth + x;
+                let sum = 0;
+                let count = 0;
+
+                for (let dy = -1; dy <= 1; dy++) {
+                    for (let dx = -1; dx <= 1; dx++) {
+                        const nx = x + dx;
+                        const ny = y + dy;
+
+                        if (nx >= 0 && nx < this.particleDensityWidth &&
+                            ny >= 0 && ny < this.particleDensityHeight) {
+                            const nIndex = ny * this.particleDensityWidth + nx;
+                            sum += this.particleDensity[nIndex];
+                            count++;
+                        }
+                    }
+                }
+
+                smoothed[index] = sum / count;
+            }
+        }
+
+        this.particleDensity = smoothed;
+    }
+
     setShowForceField(show) {
         this.showForceField = show;
         if (show) {
@@ -1225,6 +1296,19 @@ export class ParticleSimulation {
             this.forceField = null;
             this.forceFieldWidth = 0;
             this.forceFieldHeight = 0;
+        }
+    }
+
+    setShowParticleDensity(show) {
+        this.showParticleDensity = show;
+        if (show) {
+            if (!this.particleDensity) {
+                this.initParticleDensity();
+            }
+        } else {
+            this.particleDensity = null;
+            this.particleDensityWidth = 0;
+            this.particleDensityHeight = 0;
         }
     }
 

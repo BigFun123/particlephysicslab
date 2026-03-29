@@ -67,28 +67,14 @@ export class UIController {
         // Insert all buttons after title in one operation
         title.after(buttonContainer);
 
-        // Auto-select the first button
-        const firstButton = presetSection.querySelector('.btn-preset');
-        if (firstButton) {
-            const firstPreset = presets[0];
-            this.activePresetButton = firstButton;
-            firstButton.classList.add('active');
-            this.currentPresetIndex = 0;
-            this.currentPreset = firstPreset;
-
-            const headerDescription = document.getElementById('headerDescription');
-            if (firstPreset.description) {
-                headerDescription.textContent = firstPreset.description;
-                headerDescription.classList.add('visible');
-            }
-            const headerEquation = document.getElementById('headerEquation');
-            if (firstPreset.equation) {
-                headerEquation.innerHTML = firstPreset.equation;
-                headerEquation.classList.add('visible');
-                if (window.MathJax) {
-                    MathJax.typesetPromise([headerEquation]).catch(err => console.log(err));
-                }
-            }
+        // Auto-select the startup preset button (saved preset if available)
+        const desiredIndex = Number.isInteger(this.app.initialPresetIndex) ? this.app.initialPresetIndex : 0;
+        const safeIndex = Math.min(Math.max(desiredIndex, 0), presets.length - 1);
+        const initialButton = presetSection.querySelector(`.btn-preset[data-preset-index="${safeIndex}"]`);
+        if (initialButton) {
+            this.currentPresetIndex = safeIndex;
+            this.currentPreset = presets[safeIndex];
+            this.showPresetDescription(this.currentPreset, initialButton);
         }
     }
 
@@ -103,8 +89,17 @@ export class UIController {
         // Store current preset index
         this.currentPresetIndex = parseInt(button.dataset.presetIndex);
 
-        // Show description in header
+        // Show preset name and description in header
+        const headerPresetName = document.getElementById('headerPresetName');
         const headerDescription = document.getElementById('headerDescription');
+        
+        if (preset.name) {
+            headerPresetName.textContent = preset.name;
+            headerPresetName.classList.add('visible');
+        } else {
+            headerPresetName.textContent = '';
+            headerPresetName.classList.remove('visible');
+        }
         
         if (preset.description) {
             headerDescription.textContent = preset.description;
@@ -185,6 +180,16 @@ export class UIController {
             this.app.setParticleSize(size);
         });
 
+        // Glow intensity slider
+        const glowIntensitySlider = document.getElementById('glowIntensitySlider');
+        const glowIntensityValue = document.getElementById('glowIntensityValue');
+
+        glowIntensitySlider.addEventListener('input', (e) => {
+            const glow = parseFloat(e.target.value);
+            glowIntensityValue.textContent = glow.toFixed(1);
+            this.app.setGlowIntensity(glow);
+        });
+
         // Speed slider
         const speedSlider = document.getElementById('speedSlider');
         const speedValue = document.getElementById('speedValue');
@@ -229,6 +234,16 @@ export class UIController {
             forceFieldCheckbox.addEventListener('change', (e) => {
                 this.app.toggleForceField(e.target.checked);
             });
+            forceFieldCheckbox.checked = !!this.app.simulation?.showForceField;
+        }
+
+        // Particle density checkbox
+        const particleDensityCheckbox = document.getElementById('particleDensityCheckbox');
+        if (particleDensityCheckbox) {
+            particleDensityCheckbox.addEventListener('change', (e) => {
+                this.app.toggleParticleDensity(e.target.checked);
+            });
+            particleDensityCheckbox.checked = !!this.app.simulation?.showParticleDensity;
         }
 
         // Wrap edges checkbox

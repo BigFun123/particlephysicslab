@@ -3,6 +3,8 @@ import { ParticleSimulation } from './simulation.js';
 import { UIController } from './ui.js';
 import { PresetLoader } from './presetLoader.js';
 
+const SELECTED_PRESET_COOKIE = 'selectedPreset';
+
 // Make ParticleSimulation available to UI controller
 window.ParticleSimulation = ParticleSimulation;
 
@@ -20,7 +22,36 @@ class ParticleAccelerator {
         this.fpsTime = 0;
         
         this.mouseShape = null;
+        this.initialPresetIndex = 0;
         this.init();
+    }
+
+    getSelectedPresetFromCookie() {
+        const cookie = document.cookie
+            .split('; ')
+            .find((row) => row.startsWith(`${SELECTED_PRESET_COOKIE}=`));
+
+        if (!cookie) {
+            return null;
+        }
+
+        const value = cookie.substring(SELECTED_PRESET_COOKIE.length + 1);
+        return value ? decodeURIComponent(value) : null;
+    }
+
+    setSelectedPresetCookie(presetName) {
+        const maxAgeSeconds = 60 * 60 * 24 * 365;
+        document.cookie = `${SELECTED_PRESET_COOKIE}=${encodeURIComponent(presetName)}; path=/; max-age=${maxAgeSeconds}; samesite=lax`;
+    }
+
+    getInitialPresetIndex(presets) {
+        const savedPresetName = this.getSelectedPresetFromCookie();
+        if (!savedPresetName) {
+            return 0;
+        }
+
+        const savedIndex = presets.findIndex((preset) => preset.name === savedPresetName);
+        return savedIndex >= 0 ? savedIndex : 0;
     }
 
     async init() {
@@ -38,57 +69,10 @@ class ParticleAccelerator {
             this.renderer = new ParticleRenderer(this.canvas);
             await this.renderer.init();
             
-            // Load first preset instead of hardcoded values
-            const firstPreset = this.presetLoader.getPresetByIndex(0);
-            if (firstPreset) {
-                const rect = this.canvas.getBoundingClientRect();
-                
-                this.simulation = new ParticleSimulation(firstPreset.particles);
-                this.simulation.bounds.width = rect.width;
-                this.simulation.bounds.height = rect.height;
-                this.simulation.shapes = firstPreset.shapes || [];
-                // Support both single sensor and sensors array
-                this.simulation.sensors = firstPreset.sensors || (firstPreset.sensor ? [firstPreset.sensor] : []);
-                
-                // Set emitter if present - handle centering
-                if (firstPreset.emitter) {
-                    const emitter = {...firstPreset.emitter};
-                    if (emitter.x === -1) {
-                        emitter.x = rect.width / 2;
-                    }
-                    if (emitter.y === -1) {
-                        emitter.y = rect.height / 2;
-                    }
-                    this.simulation.setEmitter(emitter);
-                }
-                
-                // Set force field visibility from preset BEFORE init
-                if (firstPreset.showForceField !== undefined) {
-                    this.simulation.showForceField = firstPreset.showForceField;
-                }
-                
-                // Set wrap edges from preset
-                this.simulation.wrapEdges = firstPreset.wrapEdges || false;
-                
-                // Set liquid configuration from preset
-                if (firstPreset.liquid) {
-                    this.simulation.liquidConfig = firstPreset.liquid;
-                }
-                
-                this.simulation.init(firstPreset.initType || 'center');
-                
-                // Set renderer properties from preset
-                this.renderer.glowIntensity = firstPreset.glowIntensity || 1.5;
-                this.renderer.particleSize = firstPreset.particleSize || 2.0;
-                
-                // Set simulation speed from preset
-                this.simulation.speedMultiplier = firstPreset.speed || 1.0;
-                
-                // Set damping from preset
-                this.simulation.damping = firstPreset.damping || 0.8;
-                
-                // Update particle count display
-                document.getElementById('particleCount').textContent = firstPreset.particles.toLocaleString();
+            const presets = this.presetLoader.getPresets();
+            if (presets && presets.length > 0) {
+                this.initialPresetIndex = this.getInitialPresetIndex(presets);
+                this.loadPreset(this.initialPresetIndex);
             } else {
                 // Fallback to default values if no presets available
                 this.simulation = new ParticleSimulation(10000);
@@ -180,6 +164,11 @@ class ParticleAccelerator {
             if (this.simulation.showForceField) {
                 this.simulation.initForceField();
             }
+
+            // Reinitialize particle density field if it exists
+            if (this.simulation.showParticleDensity) {
+                this.simulation.initParticleDensity();
+            }
         }
     }
 
@@ -213,6 +202,9 @@ class ParticleAccelerator {
             this.simulation.forceFieldWidth,
             this.simulation.forceFieldHeight,
             this.simulation.forceFieldResolution,
+            this.simulation.particleDensity,
+            this.simulation.particleDensityWidth,
+            this.simulation.particleDensityHeight,
             this.simulation.emitter
         );
 
@@ -234,6 +226,7 @@ class ParticleAccelerator {
 
     loadPreset(presetNameOrIndex) {
         let preset;
+        let selectedPresetIndex = -1;
         
         const rect = this.canvas.getBoundingClientRect();
         
@@ -242,13 +235,20 @@ class ParticleAccelerator {
         
         if (typeof presetNameOrIndex === 'string') {
             preset = this.presetLoader.getPresetByName(presetNameOrIndex);
+            selectedPresetIndex = this.presetLoader.getPresets().findIndex((item) => item.name === presetNameOrIndex);
         } else {
             preset = this.presetLoader.getPresetByIndex(presetNameOrIndex);
+            selectedPresetIndex = presetNameOrIndex;
         }
 
         if (!preset) {
             console.error('Preset not found:', presetNameOrIndex);
             return;
+        }
+
+        this.setSelectedPresetCookie(preset.name);
+        if (selectedPresetIndex >= 0) {
+            this.initialPresetIndex = selectedPresetIndex;
         }
 
         this.simulation = new ParticleSimulation(preset.particles);
@@ -289,8 +289,12 @@ class ParticleAccelerator {
         // Set glow intensity if specified, otherwise use brighter default
         if (preset.glowIntensity !== undefined) {
             this.renderer.glowIntensity = preset.glowIntensity;
+            document.getElementById('glowIntensitySlider').value = preset.glowIntensity;
+            document.getElementById('glowIntensityValue').textContent = preset.glowIntensity.toFixed(1);
         } else {
             this.renderer.glowIntensity = 1.5;
+            document.getElementById('glowIntensitySlider').value = 1.5;
+            document.getElementById('glowIntensityValue').textContent = '1.5';
         }
         
         // Set particle size if specified
@@ -343,6 +347,21 @@ class ParticleAccelerator {
                 forceFieldCheckbox.checked = false;
             }
         }
+
+        // Set particle density visibility from preset
+        if (preset.showParticleDensity !== undefined) {
+            this.simulation.setShowParticleDensity(preset.showParticleDensity);
+            const particleDensityCheckbox = document.getElementById('particleDensityCheckbox');
+            if (particleDensityCheckbox) {
+                particleDensityCheckbox.checked = preset.showParticleDensity;
+            }
+        } else {
+            this.simulation.setShowParticleDensity(false);
+            const particleDensityCheckbox = document.getElementById('particleDensityCheckbox');
+            if (particleDensityCheckbox) {
+                particleDensityCheckbox.checked = false;
+            }
+        }
         
         // Update wrap edges checkbox (single declaration)
         const wrapEdgesCheckbox = document.getElementById('wrapEdgesCheckbox');
@@ -388,8 +407,16 @@ class ParticleAccelerator {
         this.renderer.particleSize = size;
     }
 
+    setGlowIntensity(glowIntensity) {
+        this.renderer.glowIntensity = glowIntensity;
+    }
+
     toggleForceField(show) {
         this.simulation.setShowForceField(show);
+    }
+
+    toggleParticleDensity(show) {
+        this.simulation.setShowParticleDensity(show);
     }
 
     toggleWrapEdges(wrap) {

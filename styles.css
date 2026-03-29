@@ -74,6 +74,21 @@ body {
     margin-top: 0.1rem;
 }
 
+.header-preset-name {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #e0e0ff;
+    margin: 0;
+    line-height: 1.0;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.header-preset-name.visible {
+    opacity: 1;
+    margin-top: 0.3rem;
+}
+
 .header-equation {
     font-family: 'Courier New', monospace;
     font-size: 0.8rem;
@@ -361,6 +376,10 @@ body {
         font-size: 1.2rem;
     }
 
+    .header-preset-name {
+        font-size: 0.8rem;
+    }
+
     .header-description {
         font-size: 0.75rem;
     }
@@ -463,6 +482,10 @@ body {
 
     .title {
         font-size: 1rem;
+    }
+
+    .header-preset-name {
+        font-size: 0.75rem;
     }
 
     .header-description {
