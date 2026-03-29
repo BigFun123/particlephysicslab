@@ -34,7 +34,7 @@
                 "mass": 100,
                 "vx": 0,
                 "vy": 0,
-                "color": "#ff1133"
+                "color": "#ffffff"
             }
         ],
         "showParticleDensity": true
@@ -62,7 +62,7 @@
                 "mass": 100,
                 "vx": 0,
                 "vy": 0,
-                "color": "#111133"
+                "color": "#ffffff"
             },
             {
                 "type": "circle",
@@ -74,7 +74,7 @@
                 "mass": 100,
                 "vx": 0,
                 "vy": 0,
-                "color": "#113311"
+                "color": "#ffffff"
             }
         ],
         "showParticleDensity": true
@@ -103,7 +103,7 @@
                 "mass": 100,
                 "vx": 0,
                 "vy": 0,
-                "color": "#111133"
+                "color": "#ffffff"
             },
             {
                 "type": "circle",
@@ -115,7 +115,7 @@
                 "mass": 100,
                 "vx": 0,
                 "vy": 0,
-                "color": "#113311"
+                "color": "#ffffff"
             }
         ],
         "showParticleDensity": true
@@ -142,7 +142,7 @@
                 "mass": 400,
                 "vx": 0,
                 "vy": 0,
-                "color": "#000033"
+                "color": "#aaaaff"
             },
             {
                 "type": "circle",
@@ -154,7 +154,7 @@
                 "mass": 500,
                 "vx": 0,
                 "vy": 0,
-                "color": "#003300"
+                "color": "#aaffaa"
             }
         ],
         "showParticleDensity": true
@@ -180,7 +180,7 @@
                 "mass": 400,
                 "vx": 0,
                 "vy": 0,
-                "color": "#000033"
+                "color": "#aaaaff"
             },
             {
                 "type": "circle",
@@ -192,7 +192,7 @@
                 "mass": 500,
                 "vx": 0,
                 "vy": 0,
-                "color": "#003300"
+                "color": "#aaffaa"
             },
             {
                 "type": "circle",
@@ -204,7 +204,7 @@
                 "mass": 200,
                 "vx": 0,
                 "vy": 0,
-                "color": "#330000"
+                "color": "#ffaaaa"
             }
         ],
         "showParticleDensity": true
@@ -236,6 +236,7 @@
         "equation": "$$P = |\\psi_1 + \\psi_2|^2$$",
         "description": "One packet of particles (a photon wave) creates two beams of light, with multiple obervable points",
         "particles": 50000,
+        "particleCollisions": false,
         "initType": "left",
         "shapes": [
             {
@@ -289,6 +290,7 @@
         "equation": "$$I = I_0 \\cdot T^n$$",
         "description": "This shows how even the darkest area can be illuminated even when there is no direct light path, as long as there are enough particles to find a path through the maze.",
         "particles": 20000,
+        "particleCollisions": true,
         "initType": "left",
         "damping": 0.999,
         "shapes": [
@@ -378,8 +380,9 @@
         "initType": "random",
         "wrapEdges": true,
         "particleSize": 3.0,
-        "speed": 1.1,
-        "damping": 0.69,
+        "showParticleDensity": true,
+        "speed": 4.1,
+        "damping": 0.89,
         "collisions": false,
         "shapes": [
             {
@@ -395,7 +398,7 @@
                 "y": 220,
                 "width": 90,
                 "height": 13,
-                "angle": -0.45,
+                "angle": 1.1208,
                 "color": "#8a6f64"
             },
             {
@@ -404,7 +407,7 @@
                 "y": 364.33,
                 "width": 90,
                 "height": 13,
-                "angle": -0.45,
+                "angle": 1.1208,
                 "color": "#8a6f64"
             },
             {
@@ -413,7 +416,7 @@
                 "y": 508.67,
                 "width": 90,
                 "height": 13,
-                "angle": -0.45,
+                "angle": 1.1208,
                 "color": "#8a6f64"
             },
             {
@@ -422,7 +425,7 @@
                 "y": 653,
                 "width": 90,
                 "height": 13,
-                "angle": -0.45,
+                "angle": 1.1208,
                 "color": "#8a6f64"
             },
             {
@@ -431,7 +434,7 @@
                 "y": 220,
                 "width": 90,
                 "height": 13,
-                "angle": -0.3467,
+                "angle": 1.2241,
                 "color": "#91766b"
             },
             {
@@ -440,7 +443,7 @@
                 "y": 364.33,
                 "width": 90,
                 "height": 13,
-                "angle": -0.3467,
+                "angle": 1.2241,
                 "color": "#91766b"
             },
             {
@@ -449,7 +452,7 @@
                 "y": 508.67,
                 "width": 90,
                 "height": 13,
-                "angle": -0.3467,
+                "angle": 1.2241,
                 "color": "#91766b"
             },
             {
@@ -458,7 +461,7 @@
                 "y": 653,
                 "width": 90,
                 "height": 13,
-                "angle": -0.3467,
+                "angle": 1.2241,
                 "color": "#91766b"
             },
             {
@@ -467,7 +470,7 @@
                 "y": 220,
                 "width": 90,
                 "height": 13,
-                "angle": -0.2433,
+                "angle": 1.3275,
                 "color": "#997e72"
             },
             {
@@ -476,7 +479,7 @@
                 "y": 364.33,
                 "width": 90,
                 "height": 13,
-                "angle": -0.2433,
+                "angle": 1.3275,
                 "color": "#997e72"
             },
             {
@@ -485,7 +488,7 @@
                 "y": 508.67,
                 "width": 90,
                 "height": 13,
-                "angle": -0.2433,
+                "angle": 1.3275,
                 "color": "#997e72"
             },
             {
@@ -494,7 +497,7 @@
                 "y": 653,
                 "width": 90,
                 "height": 13,
-                "angle": -0.2433,
+                "angle": 1.3275,
                 "color": "#997e72"
             },
             {
@@ -503,7 +506,7 @@
                 "y": 220,
                 "width": 90,
                 "height": 13,
-                "angle": -0.14,
+                "angle": 1.4308,
                 "color": "#a18678"
             },
             {
@@ -512,7 +515,7 @@
                 "y": 364.33,
                 "width": 90,
                 "height": 13,
-                "angle": -0.14,
+                "angle": 1.4308,
                 "color": "#a18678"
             },
             {
@@ -521,7 +524,7 @@
                 "y": 508.67,
                 "width": 90,
                 "height": 13,
-                "angle": -0.14,
+                "angle": 1.4308,
                 "color": "#a18678"
             },
             {
@@ -530,7 +533,7 @@
                 "y": 653,
                 "width": 90,
                 "height": 13,
-                "angle": -0.14,
+                "angle": 1.4308,
                 "color": "#a18678"
             },
             {
@@ -539,7 +542,7 @@
                 "y": 220,
                 "width": 90,
                 "height": 13,
-                "angle": -0.0367,
+                "angle": 1.5341,
                 "color": "#aa8f7f"
             },
             {
@@ -548,7 +551,7 @@
                 "y": 364.33,
                 "width": 90,
                 "height": 13,
-                "angle": -0.0367,
+                "angle": 1.5341,
                 "color": "#aa8f7f"
             },
             {
@@ -557,7 +560,7 @@
                 "y": 508.67,
                 "width": 90,
                 "height": 13,
-                "angle": -0.0367,
+                "angle": 1.5341,
                 "color": "#aa8f7f"
             },
             {
@@ -566,7 +569,7 @@
                 "y": 653,
                 "width": 90,
                 "height": 13,
-                "angle": -0.0367,
+                "angle": 1.5341,
                 "color": "#aa8f7f"
             },
             {
@@ -575,7 +578,7 @@
                 "y": 220,
                 "width": 90,
                 "height": 13,
-                "angle": 0.0667,
+                "angle": 1.6375,
                 "color": "#b39a86"
             },
             {
@@ -584,7 +587,7 @@
                 "y": 364.33,
                 "width": 90,
                 "height": 13,
-                "angle": 0.0667,
+                "angle": 1.6375,
                 "color": "#b39a86"
             },
             {
@@ -593,7 +596,7 @@
                 "y": 508.67,
                 "width": 90,
                 "height": 13,
-                "angle": 0.0667,
+                "angle": 1.6375,
                 "color": "#b39a86"
             },
             {
@@ -602,7 +605,7 @@
                 "y": 653,
                 "width": 90,
                 "height": 13,
-                "angle": 0.0667,
+                "angle": 1.6375,
                 "color": "#b39a86"
             },
             {
@@ -611,7 +614,7 @@
                 "y": 220,
                 "width": 90,
                 "height": 13,
-                "angle": 0.17,
+                "angle": 1.7408,
                 "color": "#bea591"
             },
             {
@@ -620,7 +623,7 @@
                 "y": 364.33,
                 "width": 90,
                 "height": 13,
-                "angle": 0.17,
+                "angle": 1.7408,
                 "color": "#bea591"
             },
             {
@@ -629,7 +632,7 @@
                 "y": 508.67,
                 "width": 90,
                 "height": 13,
-                "angle": 0.17,
+                "angle": 1.7408,
                 "color": "#bea591"
             },
             {
@@ -638,7 +641,7 @@
                 "y": 653,
                 "width": 90,
                 "height": 13,
-                "angle": 0.17,
+                "angle": 1.7408,
                 "color": "#bea591"
             },
             {
@@ -647,7 +650,7 @@
                 "y": 220,
                 "width": 90,
                 "height": 13,
-                "angle": 0.2733,
+                "angle": 1.8441,
                 "color": "#c8b19b"
             },
             {
@@ -656,7 +659,7 @@
                 "y": 364.33,
                 "width": 90,
                 "height": 13,
-                "angle": 0.2733,
+                "angle": 1.8441,
                 "color": "#c8b19b"
             },
             {
@@ -665,7 +668,7 @@
                 "y": 508.67,
                 "width": 90,
                 "height": 13,
-                "angle": 0.2733,
+                "angle": 1.8441,
                 "color": "#c8b19b"
             },
             {
@@ -674,7 +677,7 @@
                 "y": 653,
                 "width": 90,
                 "height": 13,
-                "angle": 0.2733,
+                "angle": 1.8441,
                 "color": "#c8b19b"
             },
             {
@@ -683,7 +686,7 @@
                 "y": 220,
                 "width": 90,
                 "height": 13,
-                "angle": 0.3767,
+                "angle": 1.9475,
                 "color": "#d3bda6"
             },
             {
@@ -692,7 +695,7 @@
                 "y": 364.33,
                 "width": 90,
                 "height": 13,
-                "angle": 0.3767,
+                "angle": 1.9475,
                 "color": "#d3bda6"
             },
             {
@@ -701,7 +704,7 @@
                 "y": 508.67,
                 "width": 90,
                 "height": 13,
-                "angle": 0.3767,
+                "angle": 1.9475,
                 "color": "#d3bda6"
             },
             {
@@ -710,7 +713,7 @@
                 "y": 653,
                 "width": 90,
                 "height": 13,
-                "angle": 0.3767,
+                "angle": 1.9475,
                 "color": "#d3bda6"
             },
             {
@@ -719,7 +722,7 @@
                 "y": 220,
                 "width": 90,
                 "height": 13,
-                "angle": 0.48,
+                "angle": 2.0508,
                 "color": "#dcc9b2"
             },
             {
@@ -728,7 +731,7 @@
                 "y": 364.33,
                 "width": 90,
                 "height": 13,
-                "angle": 0.48,
+                "angle": 2.0508,
                 "color": "#dcc9b2"
             },
             {
@@ -737,7 +740,7 @@
                 "y": 508.67,
                 "width": 90,
                 "height": 13,
-                "angle": 0.48,
+                "angle": 2.0508,
                 "color": "#dcc9b2"
             },
             {
@@ -746,35 +749,53 @@
                 "y": 653,
                 "width": 90,
                 "height": 13,
-                "angle": 0.48,
+                "angle": 2.0508,
                 "color": "#dcc9b2"
             }
-        ],
-        "showParticleDensity": false
+        ]
     },
     {
         "name": "Photon Generation",
         "equation": "$$E = hf \\qquad f = \\frac{\\omega}{2\\pi}$$",
-        "description": "A photon (a wave with a frequency we can detect) is generated by asymmetry of spinning atoms, exaggerated here by the rectangle. The faster it rotates, the higher the frequency.",
-        "particles": 50000,
+        "description": "A photon (a wave with a frequency we can detect) is generated by asymmetry of spinning atoms. The faster it rotates, the higher the frequency.",
+        "particles": 80000,
         "initType": "static",
-        "glowIntensity": 3.0,
+        "glowIntensity": 1.0,
+        "particleCollisions": false,
         "particleSize": 2.0,
-        "damping": 0.95,
-        "speed": 0.6,
-        "showForceField": true,
+        "damping": 0.99,
+        "speed": 1.0,
+        "wrapEdges": true,
+        "showForceField": false,
+        "showParticleDensity": false,
         "shapes": [
             {
-                "type": "rect",
+                "type": "circle",
                 "x": 560,
                 "y": 390,
-                "width": 300,
-                "height": 30,
+                "radius": 100,
                 "rotating": true,
                 "rotationSpeed": 0.3
             }
         ],
-        "showParticleDensity": false
+        "emitter": {
+            "attachToShape": 0,
+            "x": 710,
+            "y": 405,
+            "offsetX": 105,
+            "offsetY": 0,
+            "radius": 10,
+            "particlesPerSecond": 100,
+            "maxParticles": 15000,
+            "emitterStartIndex": 0,
+            "particleSpeed": 5,
+            "spread": 0.01,
+            "direction": {
+                "x": -1,
+                "y": 0
+            },
+            "color": "#ffaaaa"
+        }
     },
     {
         "name": "Photon Waves",
@@ -1653,7 +1674,7 @@
     {
         "name": "Rocket Engine (Lilje)",
         "equation": "$$P = nkT \\qquad \\mathbf{F}_{\\text{thrust}} \\propto \\Delta P \\cdot A$$",
-        "description": "Explains WHY Rocket propulsion happens through particle pressure. Simulates the importance of nozzle design to avoid particle vacuum and collapse. The rocket movement is emergent from particle interaction.",
+        "description": "Explains WHY Rocket propulsion happens through particle pressure. Simulates the importance of nozzle design to avoid particle vacuum and collapse. The rocket movement is emergent from particle interaction. Notice how the shockwave can actually push the rocket back down.",
         "particles": 75000,
         "initType": "static",
         "speed": 6.15,
@@ -1669,15 +1690,15 @@
             "emitterStartIndex": 60000,
             "x": 400,
             "y": 540,
-            "offsetX": -50,
-            "offsetY": 0,
+            "offsetX": 0,
+            "offsetY": 50,
             "radius": 12,
             "particlesPerSecond": 450,
             "maxParticles": 5000,
             "particleSpeed": 20,
             "direction": {
-                "x": -1,
-                "y": 0
+                "x": -0.1,
+                "y": 1
             },
             "spread": 0.001,
             "color": "#ff8844",
@@ -1701,9 +1722,9 @@
             {
                 "type": "rect",
                 "x": 320,
-                "y": 400,
-                "width": 20,
-                "height": 230,
+                "y": 600,
+                "width": 220,
+                "height": 30,
                 "angle": 0,
                 "color": "#1111ff"
             }

@@ -79,12 +79,34 @@ export class ParticleRenderer {
             
             void main() {
                 vec2 coord = gl_PointCoord - vec2(0.5);
-                float dist = length(coord);
-                if (dist > 0.5) discard;
+                float dist = length(coord) * 2.0; // Scale to 0-1 range
+                if (dist > 1.0) discard;
                 
-                // Softer falloff for more visible glow
-                float alpha = 1.0 - smoothstep(0.2, 0.5, dist);
-                fragColor = vec4(v_color.rgb, v_color.a * alpha);
+                // Create spherical/atom-like radial gradient
+                // Simulate 3D sphere with highlight and falloff
+                
+                // Core glow - very bright center
+                float core = exp(-dist * dist * 20.0);
+                
+                // Inner bright region
+                float inner = 1.0 - smoothstep(0.0, 0.4, dist);
+                
+                // Outer falloff
+                float outer = 1.0 - smoothstep(0.4, 1.0, dist);
+                
+                // Combine for 3D sphere effect: bright center, gradual falloff
+                float radialGradient = core * 2.5 + inner * 1.2 + outer * 0.5;
+                
+                // Mix with white at center for highlight effect
+                vec3 highlight = mix(v_color.rgb, vec3(1.0), core * 0.6);
+                
+                // Apply radial gradient to create depth
+                vec3 finalColor = highlight * radialGradient;
+                
+                // Soft alpha falloff at edges
+                float alpha = outer * v_color.a;
+                
+                fragColor = vec4(finalColor, alpha);
             }
         `;
 
@@ -546,10 +568,18 @@ render(positions, velocities, shapes = [], sensors = [], sensorHits = [], forceF
                 precision highp float;
                 in vec2 a_position;
                 uniform vec2 u_resolution;
+                uniform vec2 u_center;
+                uniform float u_radius;
+                out vec2 v_position;
+                out vec2 v_center;
+                out float v_radius;
                 
                 void main() {
                     vec2 clipSpace = (a_position / u_resolution) * 2.0 - 1.0;
                     gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+                    v_position = a_position;
+                    v_center = u_center;
+                    v_radius = u_radius;
                 }
             `);
 
@@ -557,10 +587,33 @@ render(positions, velocities, shapes = [], sensors = [], sensorHits = [], forceF
                 precision highp float;
                 uniform vec3 u_color;
                 uniform float u_opacity;
+                in vec2 v_position;
+                in vec2 v_center;
+                in float v_radius;
                 out vec4 fragColor;
                 
                 void main() {
-                    fragColor = vec4(u_color, u_opacity);
+                    // Calculate distance from center normalized to 0-1
+                    float dist = length(v_position - v_center) / v_radius;
+                    
+                    // Single smooth radial gradient using sqrt for natural falloff
+                    // This creates a smooth spherical gradient without flat spots
+                    float radialGradient = sqrt(1.0 - dist * dist * 0.85);
+                    
+                    // Boost the brightness more at center
+                    radialGradient = mix(radialGradient, 1.0, pow(1.0 - dist, 3.0) * 0.6);
+                    
+                    // Add subtle white highlight at very center for atom-like glow
+                    float centerHighlight = pow(1.0 - dist, 4.0);
+                    vec3 finalColor = mix(u_color * radialGradient, vec3(radialGradient), centerHighlight * 0.4);
+                    
+                    // Simulate electron microscope blur at edges
+                    // Soft falloff for blur effect - extends slightly beyond nominal radius
+                    float blurStart = 0.7;
+                    float edgeBlur = smoothstep(blurStart, 1.05, dist);
+                    float blurredAlpha = u_opacity * (1.0 - edgeBlur * 0.6);
+                    
+                    fragColor = vec4(finalColor, blurredAlpha);
                 }
             `);
 
@@ -594,6 +647,13 @@ render(positions, velocities, shapes = [], sensors = [], sensorHits = [], forceF
 
         const resLoc = gl.getUniformLocation(this.circleProgram, 'u_resolution');
         gl.uniform2f(resLoc, this.canvas.width, this.canvas.height);
+
+        // Set center and radius for gradient calculation
+        const centerLoc = gl.getUniformLocation(this.circleProgram, 'u_center');
+        gl.uniform2f(centerLoc, x * dpr, y * dpr);
+        
+        const radiusLoc = gl.getUniformLocation(this.circleProgram, 'u_radius');
+        gl.uniform1f(radiusLoc, radius * dpr);
 
         // Parse color (hex to RGB)
         const colorLoc = gl.getUniformLocation(this.circleProgram, 'u_color');

@@ -386,16 +386,11 @@ export class ParticleSimulation {
             }
 
             if (wrap) {
-                // Wrap particles to opposite side
-                if (this.positions[idx] < 0) {
-                    this.positions[idx] += w;
-                } else if (this.positions[idx] >= w) {
-                    this.positions[idx] -= w;
-                }
-                if (this.positions[idx + 1] < 0) {
-                    this.positions[idx + 1] += h;
-                } else if (this.positions[idx + 1] >= h) {
-                    this.positions[idx + 1] -= h;
+                // Randomize particle position if it goes out of bounds
+                if (this.positions[idx] < 0 || this.positions[idx] >= w || 
+                    this.positions[idx + 1] < 0 || this.positions[idx + 1] >= h) {
+                    this.positions[idx] = Math.random() * w;
+                    this.positions[idx + 1] = Math.random() * h;
                 }
             } else {
                 if (this.positions[idx] <= minX) {
@@ -457,17 +452,13 @@ export class ParticleSimulation {
 
                 // Handle edge behavior - wrap or bounce
                 if (shape.wrapEdges) {
-                    // Wrap around edges
-                    if (shape.x - shape.radius > this.bounds.width) {
-                        shape.x = -shape.radius;
-                    } else if (shape.x + shape.radius < 0) {
-                        shape.x = this.bounds.width + shape.radius;
-                    }
-                    
-                    if (shape.y - shape.radius > this.bounds.height) {
-                        shape.y = -shape.radius;
-                    } else if (shape.y + shape.radius < 0) {
-                        shape.y = this.bounds.height + shape.radius;
+                    // Randomize position if shape goes out of bounds
+                    if (shape.x - shape.radius > this.bounds.width || 
+                        shape.x + shape.radius < 0 ||
+                        shape.y - shape.radius > this.bounds.height || 
+                        shape.y + shape.radius < 0) {
+                        shape.x = shape.radius + Math.random() * (this.bounds.width - 2 * shape.radius);
+                        shape.y = shape.radius + Math.random() * (this.bounds.height - 2 * shape.radius);
                     }
                 } else {
                     // Bounce off edges
@@ -1341,8 +1332,35 @@ export class ParticleSimulation {
         if (this.emitter.attachToShape !== undefined) {
             const shape = this.shapes[this.emitter.attachToShape];
             if (shape) {
-                this.emitter.x = shape.x + (this.emitter.offsetX || 0);
-                this.emitter.y = shape.y + (this.emitter.offsetY || 0);
+                const offsetX = this.emitter.offsetX || 0;
+                const offsetY = this.emitter.offsetY || 0;
+                
+                // Calculate the reference point (center for shapes)
+                let centerX, centerY;
+                if (shape.type === 'rect') {
+                    // For rectangles, (x,y) is top-left, so calculate center
+                    centerX = shape.x + shape.width / 2;
+                    centerY = shape.y + shape.height / 2;
+                } else if (shape.type === 'circle') {
+                    // For circles, (x,y) is already the center
+                    centerX = shape.x;
+                    centerY = shape.y;
+                } else {
+                    // Default: use x,y directly
+                    centerX = shape.x;
+                    centerY = shape.y;
+                }
+                
+                // If the shape has an angle, rotate the offset
+                if (shape.angle !== undefined && shape.angle !== 0) {
+                    const cos = Math.cos(shape.angle);
+                    const sin = Math.sin(shape.angle);
+                    this.emitter.x = centerX + (offsetX * cos - offsetY * sin);
+                    this.emitter.y = centerY + (offsetX * sin + offsetY * cos);
+                } else {
+                    this.emitter.x = centerX + offsetX;
+                    this.emitter.y = centerY + offsetY;
+                }
             }
         }
         
